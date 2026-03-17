@@ -15,7 +15,6 @@ func SendOTPEmail(email string, otp string) error {
 
 	from := cfg.EMAIL
 	password := cfg.EMAIL_PASSWORD
-
 	smtpHost := cfg.SMTP_HOST
 	smtpPort := cfg.SMTP_PORT
 

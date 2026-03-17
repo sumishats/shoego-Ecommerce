@@ -15,19 +15,19 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 
 	data.OTP = strings.TrimSpace(data.OTP)
 
-	// 1. Get OTP record directly
+	
 	otpData, err := repository.VerifyOTP(data.Email, data.OTP, "signup")
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Check if user already exists
+	// Check user already exists
 	userData, err := repository.FindUserByEmail(data.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	// 3. If user does not exist, create user
+	//user does not exist, create user
 	if userData == nil {
 
 		userInsert, err := repository.SignupInsert(models.SignupDetail{
@@ -48,10 +48,10 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 		}
 	}
 
-	// 4. Delete OTP AFTER user creation
+	// Delete OTP after create user
 	_ = repository.DeleteOTP(data.Email, "signup")
 
-	// 5. Prepare response
+	// user response
 	userResp := models.SignupDetailResponse{
 		ID:    int(userData.ID),
 		Name:  userData.Name,
@@ -59,7 +59,7 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 		Phone: userData.Phone,
 	}
 
-	// 6. Generate tokens
+	
 	accessToken, _ := helper.GenerateAccessToken(userResp)
 	refreshToken, _ := helper.GenerateRefreshToken(userResp)
 
@@ -83,7 +83,7 @@ func ResendOTP(email string) error {
 	otp := helper.GenerateOTP()
 	expiry := time.Now().Add(2 * time.Minute)
 
-	userData, err := repository.GetSignupDataFromOTP(email) // make sure this fetches full OTP info
+	userData, err := repository.GetSignupDataFromOTP(email) // fetches full OTP info
 	if err != nil {
 		return errors.New("cannot find signup info for this email")
 	}
@@ -91,6 +91,7 @@ func ResendOTP(email string) error {
 	// save new OTP with full info
 	userData.OTP = otp
 	userData.ExpiresAt = expiry
+
 	err = repository.SaveOTPFull(*userData)
 	if err != nil {
 		return err
@@ -132,32 +133,32 @@ func ForgotPassword(email string) error {
 }
 
 func ResetPassword(email, otp, newPassword string) (*models.TokenUser, error) {
-	// 1️⃣ Verify OTP
+
 	otpData, err := repository.VerifyOTP(email, otp, "forgot_password")
 	if err != nil {
 		return nil, err
 	}
 
-	// Optional: check if OTP is expired
-	if otpData.ExpiresAt.Before(time.Now()) {
+	if otpData.ExpiresAt.Before(time.Now()) { //check otp expire or not
 		return nil, errors.New("OTP expired")
 	}
-	// 2️⃣ Hash new password
+
+	//  Hash new password
 	hashedPass, err := helper.PasswordHashing(newPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	// 3️⃣ Update password in user table
+	//  Update password in user table
 	user, err := repository.UpdatePassword(email, hashedPass)
 	if err != nil {
 		return nil, err
 	}
 
-	// 4️⃣ Delete OTP after verification
+	
 	_ = repository.DeleteOTP(email, "forgot_password")
 
-	// 5️⃣ Generate tokens
+	//user response after reset password
 	userResp := models.SignupDetailResponse{
 		ID:    int(user.ID),
 		Name:  user.Name,

@@ -7,6 +7,7 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+//dtabse details and other details are stored in this struct and loaded from .env file
 type Config struct {
 	BASE_URL   string `mapstructure:"BASE_URL"`
 	DBHost     string `mapstructure:"DB_HOST"`
@@ -35,7 +36,7 @@ func LoadConfig() (Config, error) {
 	var config Config
 
 	viper.AddConfigPath("./")
-	viper.SetConfigFile(".env")
+	viper.SetConfigFile(".env") //load evn file
 	err := viper.ReadInConfig()
 
 	if err != nil {
@@ -49,7 +50,7 @@ func LoadConfig() (Config, error) {
 			return config, err
 		}
 	}
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&config); err != nil { //covert env variale to struct
 
 		return config, err
 	}

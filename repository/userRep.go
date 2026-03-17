@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	"shoego/database"
 	"shoego/domain"
 	"shoego/models"
@@ -23,7 +22,7 @@ func CheckingEmailValidation(email string) (*domain.User, error) {
 		}
 		return nil, result.Error
 	}
-	fmt.Println("user details was :", user)
+
 	return &user, nil
 }
 
@@ -42,34 +41,33 @@ func CheckingPhoneExists(phone string) (*domain.User, error) {
 	return &user, nil
 
 }
+
 func SignupInsert(user models.SignupDetail) (models.SignupDetailResponse, error) {
-    dbUser := domain.User{
-        Name:     user.Name,
-        Email:    user.Email,
-        Password: user.Password,
-        Phone:    user.Phone,
-    }
+	dbUser := domain.User{
+		Name:     user.Name,
+		Email:    user.Email,
+		Password: user.Password,
+		Phone:    user.Phone,
+	}
 
-    err := database.DB.Create(&dbUser).Error
-    if err != nil {
-        return models.SignupDetailResponse{}, err
-    }
+	err := database.DB.Create(&dbUser).Error
+	if err != nil {
+		return models.SignupDetailResponse{}, err
+	}
 
-    return models.SignupDetailResponse{
-        ID:    int(dbUser.ID),
-        Name:  dbUser.Name,
-        Email: dbUser.Email,
-        Phone: dbUser.Phone,
-    }, nil
+	return models.SignupDetailResponse{
+		ID:    int(dbUser.ID),
+		Name:  dbUser.Name,
+		Email: dbUser.Email,
+		Phone: dbUser.Phone,
+	}, nil
 }
-
 
 func FindUserDetailByEmail(user models.UserLogin) (models.UserLoginResponse, error) {
 	var UserDetails models.UserLoginResponse
 
-	err := database.DB.Raw(
-		`SELECT * FROM users WHERE email = ? AND blocked = false LIMIT 1`, user.Email,
-	).Scan(&UserDetails).Error
+	//get user for db
+	err := database.DB.Raw(`SELECT * FROM users WHERE email = ? AND blocked = false LIMIT 1`, user.Email,).Scan(&UserDetails).Error
 
 	if err != nil {
 		return models.UserLoginResponse{}, errors.New("error searching users by email")
@@ -84,7 +82,7 @@ func FindUserByEmail(email string) (*domain.User, error) {
 	result := database.DB.Where(&domain.User{Email: email}).First(&User)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {  
 			return nil, nil
 		}
 		return nil, result.Error
@@ -93,6 +91,7 @@ func FindUserByEmail(email string) (*domain.User, error) {
 }
 
 func CreateGoogleUser(user domain.User) (*domain.User, error) {
+	//save user info into db 
 	err := database.DB.Create(&user).Error
 	if err != nil {
 		return nil, err

@@ -9,10 +9,19 @@ import (
 )
 
 func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
-	r.POST("/admin", handlers.AdminLogin)
+	// public admin route
+	r.POST("/login", handlers.AdminLogin)
 
-	//middileware
-	r.Use(middileware.AuthorizationMiddleware())
+	// protected admin routes
+	adminProtected := r.Group("/")
+	adminProtected.Use(middileware.AuthorizationMiddleware())
 
-	return r 
+	{
+		//user management 
+		adminProtected.GET("/users", handlers.GetUsers)
+		adminProtected.PATCH("/block-user/:id", handlers.BlockUser)
+		adminProtected.PATCH("/unblock-user/:id", handlers.UnblockUser)
+	}
+
+	return r
 }

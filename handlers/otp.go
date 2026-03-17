@@ -8,6 +8,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+// @Summary  OTP login
+// @Description Send OTP to Authenticate user
+// @Tags User OTP Login
+// @Accept json
+// @Produce json
+// @Param phone body models.OTPData true "phone number details"
+// @Success 200 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /send-otp [post]
 
 func ResendOTP(c *gin.Context) {
 
@@ -28,6 +37,16 @@ func ResendOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, "OTP sent again")
 }
 
+// @Summary Verify OTP
+// @Description Verify OTP by passing the OTP in order to authenticate user
+// @Tags User OTP Login
+// @Accept json
+// @Produce json
+// @Param phone body models.VerifyData true "Verify OTP Details"
+// @Success 200 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /verify-otp [post]
+
 func VerifyOTP(c *gin.Context) {
 
 	var otpReq models.VerifyOTP
@@ -45,14 +64,14 @@ func VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// ✅ Build response struct
+	//return user response struct 
 	userRes := response.UserResponse{
 		ID:    user.User.ID,
 		Name:  user.User.Name,
 		Email: user.User.Email,
 		Phone: user.User.Phone,
 	}
-	// ✅ Send response
+	// Send success response
 	successRes := response.ClientResponse(
 		http.StatusOK,
 		"OTP verified successfully",
@@ -62,6 +81,16 @@ func VerifyOTP(c *gin.Context) {
 
 	c.JSON(http.StatusOK, successRes)
 }
+
+// @Summary Forgot Password
+// @Description Send OTP to user email to reset password
+// @Tags User Password
+// @Accept json
+// @Produce json
+// @Param data body models.ForgotPasswordRequest true "Forgot Password Details"
+// @Success 200 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /forgot-password [post]
 
 func ForgotPassword(c *gin.Context) {
 	var req models.ForgotPassword
@@ -82,6 +111,17 @@ func ForgotPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, "OTP sent to your email ")
 }
 
+// @Summary Reset Password
+// @Description Reset user password using OTP verification
+// @Tags User Password
+// @Accept json
+// @Produce json
+// @Param data body models.ResetPasswordRequest true "Reset Password Details"
+// @Success 200 {object} response.Response{}
+// @Failure 400 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /reset-password [post]
+
 func ResetPassword(c *gin.Context) {
 	var req models.ResetPassword
 
@@ -92,6 +132,7 @@ func ResetPassword(c *gin.Context) {
 	}
 
 	userToken, err := usecase.ResetPassword(req.Email, req.OTP, req.NewPassword)
+	
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, err.Error(), nil, nil)
 		c.JSON(http.StatusBadRequest, errRes)

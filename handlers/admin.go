@@ -11,11 +11,21 @@ import (
 	"github.com/go-playground/validator"
 )
 
+// @Summary Admin Login
+// @Description Login handler for admin
+// @Tags Admin Authentication
+// @Accept json
+// @Produce json
+// @Param  admin body models.AdminLogin true "Admin login details"
+// @Success 200 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /admin/admin [post]
+
 func AdminLogin(c *gin.Context) {
 	var adminmodel models.AdminLogin
 
 	if err := c.ShouldBindJSON(&adminmodel); err != nil {
-		erres := response.ClientResponse(http.StatusBadGateway, "formate is not correct (admin)", nil, err)
+		erres := response.ClientResponse(http.StatusBadGateway, "formate is not correct admin", nil, err)
 		c.JSON(http.StatusBadGateway, erres)
 		return
 	}

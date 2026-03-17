@@ -12,9 +12,9 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-//	@title			shoego
+//	@title			shoego API
 //	@version		1.0
-//	@description	shoego API Documentation
+//	@description	API for ecommerce website
 //	@securityDefinitions.apiKey	Bearer
 //	@in							header
 //	@name						Authorization
@@ -24,9 +24,9 @@ import (
 //	@BasePath		/
 //
 // @schemes	http
-
 func main() {
 
+	//swgger info to test api easy
 	docs.SwaggerInfo.Title = "Shoego API"
 	docs.SwaggerInfo.Description = "Shoego API Documentation"
 	docs.SwaggerInfo.Version = "1.0"

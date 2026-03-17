@@ -26,13 +26,12 @@ func Signup(c *gin.Context) {
 	var usersign models.SignupDetail
 
 	if err := c.ShouldBindJSON(&usersign); err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "fields provided are in wrong format 🙌", nil, err.Error())
+		errRes := response.ClientResponse(http.StatusBadRequest, "fields provided are in wrong format", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
 
-	// CHEKING THE DATA ARE SENDED IN CORRECT FORMET OR NOT
-
+	// check the data sending in correct or not format
 	if err := validator.New().Struct(usersign); err != nil {
 
 		errres := response.ClientResponse(404, "They are not in format", nil, err.Error())
@@ -52,6 +51,18 @@ func Signup(c *gin.Context) {
 	c.JSON(http.StatusCreated, successRes)
 }
 
+//userlogin
+
+// @Summary LogIn functionality for user
+// @Description LogIn functionality at the user side
+// @Tags User Authentication
+// @Accept json
+// @Produce json
+// @Param user body models.UserLogin true "User Details Input"
+// @Success 200 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /login [post]
+
 func UserLoginWithPassword(c *gin.Context) {
 	var LoginUser models.UserLogin
 
@@ -62,7 +73,7 @@ func UserLoginWithPassword(c *gin.Context) {
 	}
 
 	if err := validator.New().Struct(LoginUser); err != nil {
-		erres := response.ClientResponse(http.StatusBadGateway, "Login field was wrong formate ahn", nil, err.Error())
+		erres := response.ClientResponse(http.StatusBadGateway, "Login field was wrong formate ", nil, err.Error())
 		c.JSON(http.StatusBadGateway, erres)
 		return
 	}

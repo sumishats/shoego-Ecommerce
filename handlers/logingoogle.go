@@ -12,6 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @Summary Google Login
+// @Description Redirect user to Google authentication page
+// @Tags User Authentication
+// @Accept json
+// @Produce json
+// @Success 302 {string} string "Redirect to Google login page"
+// @Router /auth/google/login [get]
+
 func GoogleLogin(c *gin.Context) {
 
 	url := config.GoogleOAuthConfig.AuthCodeURL("state")
@@ -19,8 +27,22 @@ func GoogleLogin(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
+// @Summary Google Login Callback
+// @Description Google OAuth callback to authenticate user
+// @Tags User Authentication
+// @Accept json
+// @Produce json
+// @Param code query string true "Authorization Code"
+// @Param state query string true "State"
+// @Success 200 {object} response.Response{}
+// @Failure 500 {object} response.Response{}
+// @Router /auth/google/callback [get]
+
 func GoogleCallback(c *gin.Context) {
-	code := c.Query("code")
+	//temp authentication code from google
+	//it used --> google does not end user details directly 
+	//send code to google with query params and google send access token and use access token to get user profile 
+	code := c.Query("code") //--> get code from url query params 
 	if code == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "code not found"})
 		return
@@ -40,6 +62,7 @@ func GoogleCallback(c *gin.Context) {
 
 	var userData *domain.User
 
+	//if user not exist  ,create user
 	if existingUser == nil {
 		newUser := domain.User{
 			Name:     googleUser.Name,
@@ -57,7 +80,7 @@ func GoogleCallback(c *gin.Context) {
 		}
 
 		userData = createdUser
-	} else {
+	} else { //if user already exist 
 		userData = existingUser
 	}
 

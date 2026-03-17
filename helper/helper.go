@@ -18,7 +18,7 @@ type AuthCustomClaims struct {
 }
 
 func PasswordHashing(password string) (string, error) {
-	
+
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 
@@ -47,7 +47,7 @@ func GenerateTokenUsers(userID int, userEmail string, expirationTime time.Time) 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(cfg.KEY))
 
-	// tokenString, err:=jwt.NewWithClaims(jwt.SigningMethodHS256, &AuthCustomClaims{Id:    userID, Email: userEmail,StandardClaims: jwt.StandardClaims{ExpiresAt: expirationTime.Unix(),IssuedAt:  time.Now().Unix(),},}).SignedString([]byte(cfg.KEY))
+
 	if err != nil {
 		return "", err
 	}
@@ -57,8 +57,8 @@ func GenerateTokenUsers(userID int, userEmail string, expirationTime time.Time) 
 
 func GenerateAccessToken(user models.SignupDetailResponse) (string, error) {
 
-	expirationTime := time.Now().Add(15 * time.Minute)
-	tokenString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime)
+	expirationTime := time.Now().Add(15 * time.Minute) //valid 15 minute 
+	tokenString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime) //use for protect api access
 	if err != nil {
 		return "", err
 	}
@@ -68,8 +68,8 @@ func GenerateAccessToken(user models.SignupDetailResponse) (string, error) {
 
 func GenerateRefreshToken(user models.SignupDetailResponse) (string, error) {
 
-	expirationTime := time.Now().Add(24 * 90 * time.Hour)
-	tokeString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime)
+	expirationTime := time.Now().Add(24 * 90 * time.Hour) //valid 90 day
+	tokeString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime) //use for gew new access token when access token expired
 	if err != nil {
 		return "", err
 	}

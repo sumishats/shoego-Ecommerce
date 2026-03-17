@@ -8,8 +8,8 @@ import (
 )
 
 func GetTokenFromHeader(header string) string {
-	//SPLIT THE HEADER TOKEN****
-
+	
+	//SPLIT THE HEADER TOKEN
 	if len(header) > 7 && header[:7] == "Bearer " {
 		return header[7:]
 	}

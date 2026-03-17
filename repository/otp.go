@@ -9,15 +9,15 @@ import (
 
 	"gorm.io/gorm"
 )
-
+//save otp in databse 
 func SaveOTPFull(data domain.OTPVerification) error {
 
-	err := database.DB.Create(&data).Error
+	err := database.DB.Create(&data).Error //insert user info in db 
 	if err != nil {
 		fmt.Println("DB Insert Error:", err)
 		return err
 	}
-	
+
 	return nil
 
 }
@@ -26,11 +26,9 @@ func CheckOTPResendAllowed(email string) (bool, error) {
 
 	var otp domain.OTPVerification
 
-	err := database.DB.
-		Where("email = ?", email).
-		Order("created_at desc").
-		First(&otp).Error
-
+	//find otp for email and check expire or not 
+	err := database.DB.Where("email = ?", email).Order("created_at desc").First(&otp).Error 
+	
 	if err != nil {
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -40,10 +38,8 @@ func CheckOTPResendAllowed(email string) (bool, error) {
 		return false, err
 	}
 
-	fmt.Println("Last OTP created at:", otp.CreatedAt)
-	fmt.Println("Time since:", time.Since(otp.CreatedAt))
-
-	if time.Since(otp.CreatedAt) < 30*time.Second {
+	//if otp create less than 30 sec not allow resend 
+	if time.Since(otp.CreatedAt) < 30*time.Second { 
 		return false, nil
 	}
 
@@ -54,12 +50,12 @@ func VerifyOTP(email, otp, otpType string) (domain.OTPVerification, error) {
 
 	var otpData domain.OTPVerification
 
-	err := database.DB.
-		Where("email = ? AND otp = ? AND type = ?", email, otp, otpType).
-		First(&otpData).Error
+	//find matching email and otp and type is signup or other
+	err := database.DB.Where("email = ? AND otp = ? AND type = ?", email, otp, otpType).First(&otpData).Error
 
 	return otpData, err
 }
+
 func GetSignupDataByEmail(email string) (domain.OTPVerification, error) {
 
 	var otpData domain.OTPVerification
@@ -75,10 +71,8 @@ func GetSignupDataByEmail(email string) (domain.OTPVerification, error) {
 func GetSignupDataFromOTP(email string) (*domain.OTPVerification, error) {
 	var otp domain.OTPVerification
 
-	err := database.DB.
-		Where("email = ? AND type = ?", email, "signup").
-		Order("created_at desc").
-		First(&otp).Error
+	//find latest otp for email and type signup
+	err := database.DB.Where("email = ? AND type = ?", email, "signup").Order("created_at desc").First(&otp).Error 
 
 	if err != nil {
 		return nil, err

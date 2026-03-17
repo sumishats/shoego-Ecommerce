@@ -11,17 +11,19 @@ import (
 
 func GetGoogleUser(code string) (*models.GoogleUser, error) {
 
+	// Exchange the authorization code for an access token
 	token, err := config.GoogleOAuthConfig.Exchange(
-		context.Background(),
+		context.Background(), 
 		code,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// Use the access token to get user info from Google
+	//tell give me user info for this token 
 	resp, err := http.Get(
-		"https://www.googleapis.com/oauth2/v2/userinfo?access_token=" +
-			token.AccessToken,
+		"https://www.googleapis.com/oauth2/v2/userinfo?access_token=" +token.AccessToken,
 	)
 
 	if err != nil {
@@ -33,7 +35,7 @@ func GetGoogleUser(code string) (*models.GoogleUser, error) {
 	body, _ := io.ReadAll(resp.Body)
 
 	var user models.GoogleUser
-	json.Unmarshal(body, &user)
+	json.Unmarshal(body, &user) //convert json to struct
 
 	return &user, nil
 }

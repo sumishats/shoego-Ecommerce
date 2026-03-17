@@ -10,7 +10,6 @@ import (
 	"shoego/repository"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,7 +33,7 @@ func UsersignUp(user models.SignupDetail) error {
 	otp := helper.GenerateOTP()
 	expiry := time.Now().Add(2 * time.Minute)
 
-	// save full info in OTP table
+	// temporary save full info in OTP table before signup
 	otpData := domain.OTPVerification{
 		Email:     user.Email,
 		Name:      user.Name,
@@ -61,13 +60,13 @@ func UsersignUp(user models.SignupDetail) error {
 
 func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 
-	// 1. Validate email format
+	// Validate email format
 	_, err := mail.ParseAddress(user.Email)
 	if err != nil {
 		return &models.TokenUser{}, errors.New("EMAIL SHOULD BE CORRECT FORMAT")
 	}
 
-	// 2. Get user from users table
+	// Get user from users table
 	userDetails, err := repository.FindUserDetailByEmail(user)
 	if err != nil {
 		return &models.TokenUser{}, err
@@ -75,24 +74,22 @@ func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 	if userDetails.ID == 0 {
 		return &models.TokenUser{}, models.ErrEmailNotFound
 	}
-	fmt.Println("Password from DB (hash):", userDetails.Password)
-	fmt.Println("Password from input:", user.Password)
 
-	// 3. Compare input password with hashed password in users table
+	// Compare input password with hashed password in users table
 	err = bcrypt.CompareHashAndPassword([]byte(userDetails.Password), []byte(user.Password))
 	if err != nil {
 		fmt.Println("Password mismatch")
 		return &models.TokenUser{}, errors.New("hashed password not matching")
 	}
 
-	// 4. Copy to response struct
-	var userResp models.SignupDetailResponse
-	err = copier.Copy(&userResp, &userDetails)
-	if err != nil {
-		return &models.TokenUser{}, errors.New("error in copier")
+	//create user response 
+	userResp := models.SignupDetailResponse{
+		ID:    int(userDetails.ID),
+		Name:  userDetails.Name,
+		Email: userDetails.Email,
+		Phone: userDetails.Phone,
 	}
 
-	// 5. Generate tokens
 	accessToken, err := helper.GenerateAccessToken(userResp)
 	if err != nil {
 		return &models.TokenUser{}, errors.New("could not create access token")

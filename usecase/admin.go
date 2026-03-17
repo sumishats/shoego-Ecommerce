@@ -14,7 +14,6 @@ import (
 func AdminLogin(adminmodel models.AdminLogin) (domain.TokenAdmin, error) {
 
 	// GETTING DETAILS FROM ADMIN WITH EMAIL
-
 	AdminDetail, err := repository.AdminLogin(adminmodel)
 
 	if err != nil {
@@ -22,7 +21,6 @@ func AdminLogin(adminmodel models.AdminLogin) (domain.TokenAdmin, error) {
 		return domain.TokenAdmin{}, errors.New("given mail formate have")
 
 	}
-	// password := AdminDetail.Password
 
 	if AdminDetail.Password == "" {
 		return domain.TokenAdmin{}, errors.New("error from admin password")
