@@ -82,7 +82,7 @@ func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 		return &models.TokenUser{}, errors.New("hashed password not matching")
 	}
 
-	//create user response 
+	//create user response
 	userResp := models.SignupDetailResponse{
 		ID:    int(userDetails.ID),
 		Name:  userDetails.Name,
@@ -104,4 +104,161 @@ func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+// get user profile details and address details by user id
+func GetUserProfile(userID uint) (*models.UserProfileResponse, error) {
+	user, err := repository.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses, err := repository.GetAddressesByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	//address convert to response 
+	var addressResp []models.AddressResponse
+	for _, addr := range addresses {
+		addressResp = append(addressResp, models.AddressResponse{
+			ID:        addr.ID,
+			Name:      addr.Name,
+			Phone:     addr.Phone,
+			HouseName: addr.HouseName,
+			Street:    addr.Street,
+			City:      addr.City,
+			State:     addr.State,
+			Pincode:   addr.Pincode,
+			IsDefault: addr.IsDefault,
+		})
+	}
+
+	return &models.UserProfileResponse{
+		ID:           user.ID,
+		Name:         user.Name,
+		Email:        user.Email,
+		Phone:        user.Phone,
+		ProfileImage: user.ProfileImage,
+		Addresses:    addressResp,
+	}, nil
+}
+
+// edit user profile details by user id and send to repository for update in db
+func EditUserProfile(userID uint, req models.EditProfileRequest) error {
+	return repository.UpdateUserProfile(userID, req.Name, req.Phone, req.ProfileImage)
+}
+
+
+func ChangePassword(userID uint, req models.ChangePasswordRequest) error {
+	user, err := repository.GetUserByID(userID)
+	if err != nil {
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword))
+	if err != nil {
+		return errors.New("old password is incorrect")
+	}
+
+	hashedPassword, err := helper.PasswordHashing(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	return repository.UpdateUserPassword(userID, hashedPassword)
+}
+
+
+func RequestEmailChange(userID uint, newEmail string) error {
+	
+	otp := helper.GenerateOTP()
+
+	err := repository.SaveOTPFull(domain.OTPVerification{
+		Email: newEmail,
+		OTP:   otp,
+		Type:  "email_change",
+	})
+	if err != nil {
+		return err
+	}
+
+	return helper.SendOTPEmail(newEmail, otp)
+}
+
+// verify email , if valid update email in db 
+func VerifyEmailChange(userID uint, req models.VerifyEmailChangeRequest) error {
+	_, err := repository.VerifyOTP(req.NewEmail, req.OTP, "email_change")
+	if err != nil {
+		return err
+	}
+
+	err = repository.UpdateUserEmail(userID, req.NewEmail)
+	if err != nil {
+		return err
+	}
+
+	_ = repository.DeleteOTP(req.NewEmail, "email_change")
+	return nil
+}
+
+func AddUserAddress(userID uint, req models.AddAddressRequest) error {
+	//check new address is default or not
+	if req.IsDefault {
+		_ = repository.ClearDefaultAddresses(userID)
+	}
+
+	
+	address := domain.Address{
+		UserID:    userID,
+		Name:      req.Name,
+		Phone:     req.Phone,
+		HouseName: req.HouseName,
+		Street:    req.Street,
+		City:      req.City,
+		State:     req.State,
+		Pincode:   req.Pincode,
+		IsDefault: req.IsDefault,
+	}
+
+	return repository.AddAddress(address)
+}
+
+func EditUserAddress(userID uint, addressID uint, req models.EditAddressRequest) error {
+	address, err := repository.GetAddressByID(addressID)
+	if err != nil {
+		return err
+	}
+
+	if address.UserID != userID {
+		return errors.New("address does not belong to this user")
+	}
+
+	if req.IsDefault {
+		_ = repository.ClearDefaultAddresses(userID)
+	}
+
+	return repository.UpdateAddress(addressID, map[string]interface{}{
+		"name":  req.Name,
+		"phone":      req.Phone,
+		"house_name": req.HouseName,
+		"street":     req.Street,
+		"city":       req.City,
+		"state":      req.State,
+		"pincode":    req.Pincode,
+		"is_default": req.IsDefault,
+	})
+}
+
+func DeleteUserAddress(userID uint, addressID uint) error {
+	address, err := repository.GetAddressByID(addressID)
+	if err != nil {
+		return err
+	}
+
+	if address.UserID != userID {
+		return errors.New("address does not belong to this user")
+	}
+
+	return repository.DeleteAddress(addressID)
 }

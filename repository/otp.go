@@ -11,8 +11,9 @@ import (
 )
 //save otp in databse 
 func SaveOTPFull(data domain.OTPVerification) error {
-
-	err := database.DB.Create(&data).Error //insert user info in db 
+	
+	//insert user info in db
+	err := database.DB.Create(&data).Error 
 	if err != nil {
 		fmt.Println("DB Insert Error:", err)
 		return err

@@ -28,3 +28,65 @@ type UserLoginResponse struct {
 	Blocked  bool   `json:"blocked" gorm:"column:blocked"`
 	IsAdmin  bool   `json:"isadmin" gorm:"column:isadmin"`
 }
+type UserProfileResponse struct {
+	ID           uint              `json:"id"`
+	Name         string            `json:"name"`
+	Email        string            `json:"email"`
+	Phone        string            `json:"phone"`
+	ProfileImage string            `json:"profile_image"`
+	Addresses    []AddressResponse `json:"addresses"`
+}
+
+type EditProfileRequest struct {
+	Name         string `json:"name"`
+	Phone        string `json:"phone"`
+	ProfileImage string `json:"profile_image"`
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
+type EmailChangeRequest struct {
+	NewEmail string `json:"new_email"`
+}
+
+type VerifyEmailChangeRequest struct {
+	NewEmail string `json:"new_email"`
+	OTP      string `json:"otp"`
+}
+
+type AddAddressRequest struct {
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	HouseName string `json:"house_name"`
+	Street    string `json:"street"`
+	City      string `json:"city"`
+	State     string `json:"state"`
+	Pincode   string `json:"pincode"`
+	IsDefault bool   `json:"is_default"`
+}
+
+type EditAddressRequest struct {
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	HouseName string `json:"house_name"`
+	Street    string `json:"street"`
+	City      string `json:"city"`
+	State     string `json:"state"`
+	Pincode   string `json:"pincode"`
+	IsDefault bool   `json:"is_default"`
+}
+
+type AddressResponse struct {
+	ID        uint   `json:"id"`
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	HouseName string `json:"house_name"`
+	Street    string `json:"street"`
+	City      string `json:"city"`
+	State     string `json:"state"`
+	Pincode   string `json:"pincode"`
+	IsDefault bool   `json:"is_default"`
+}

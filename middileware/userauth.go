@@ -12,7 +12,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Println("Request Headerss:", c.Request.Header)
 
-		//retrive the jwt token from the header 
+		//retrive the jwt token from the header
 		authheader := c.GetHeader("Authorization")
 
 		tokenString := helper.GetTokenFromHeader(authheader)
@@ -37,12 +37,11 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		//ADD USER ID ON THE GIN CONTEXT 
+		//ADD USER ID ON THE GIN CONTEXT
 
-		c.Set("user_id", userId)
+		c.Set("user_id", uint(userId))
 		c.Set("user_email", userEmail)
-
-		// CALL THE NEXT HANDLER 
+		// CALL THE NEXT HANDLER
 
 		c.Next()
 

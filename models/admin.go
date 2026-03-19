@@ -14,7 +14,8 @@ type AdminDetailsResponse struct {
 }
 
 
-type AdminUserResponse struct { //one user row response for admin
+//one user row response for admin
+type AdminUserResponse struct { 
 	ID        uint   `json:"id"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
@@ -24,7 +25,8 @@ type AdminUserResponse struct { //one user row response for admin
 	CreatedAt string `json:"created_at"`
 }
 
-type AdminUserListResponse struct { //all users list  and  pagination ,limit, count..
+//all users list  and  pagination ,limit, count..
+type AdminUserListResponse struct { 
 	Users      []AdminUserResponse `json:"users"`
 	Page       int                 `json:"page"`
 	Limit      int                 `json:"limit"`

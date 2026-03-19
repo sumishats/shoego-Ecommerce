@@ -22,6 +22,21 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.PATCH("/block-user/:id", handlers.BlockUser)
 		adminProtected.PATCH("/unblock-user/:id", handlers.UnblockUser)
 	}
+	{
+		// product management
+
+		adminProtected.POST("/products", handlers.AddProduct)
+		adminProtected.PUT("/products/:id", handlers.EditProduct)
+		adminProtected.DELETE("/products/:id", handlers.DeleteProduct)
+		adminProtected.GET("/products", handlers.GetProducts)
+	}
+	{
+		//cateory management
+		adminProtected.POST("/categories", handlers.AddCategory)
+		adminProtected.PUT("/categories/:id", handlers.EditCategory)
+		adminProtected.DELETE("/categories/:id", handlers.DeleteCategory)
+		adminProtected.GET("/categories", handlers.GetCategories)
+	}
 
 	return r
 }

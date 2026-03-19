@@ -43,6 +43,7 @@ func CountUsers(search string) (int64, error) {
 }
 
 func FindUserByID(id uint) (*domain.User, error) {
+	//fetch user by id in db
 	var user domain.User
 
 	err := database.DB.First(&user, id).Error
@@ -53,14 +54,12 @@ func FindUserByID(id uint) (*domain.User, error) {
 	return &user, nil
 }
 
+//update user blocked  in db
 func BlockUser(id uint) error {
-	return database.DB.Model(&domain.User{}).
-		Where("id = ?", id).
-		Update("blocked", true).Error
+	return database.DB.Model(&domain.User{}).Where("id = ?", id).Update("blocked", true).Error
 }
 
+//update user unblock 
 func UnblockUser(id uint) error {
-	return database.DB.Model(&domain.User{}).
-		Where("id = ?", id).
-		Update("blocked", false).Error
+	return database.DB.Model(&domain.User{}).Where("id = ?", id).Update("blocked", false).Error
 }

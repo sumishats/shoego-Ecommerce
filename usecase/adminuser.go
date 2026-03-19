@@ -13,7 +13,8 @@ func GetAdminUsers(pageStr string, limitStr string, search string) (*models.Admi
 	page := 1
 	limit := 10
 
-	if pageStr != "" { //convert string to int 
+	//convert string to int 
+	if pageStr != "" { 
 		p, err := strconv.Atoi(pageStr)
 		if err == nil && p > 0 {
 			page = p
@@ -27,7 +28,8 @@ func GetAdminUsers(pageStr string, limitStr string, search string) (*models.Admi
 		}
 	}
 
-	offset := (page - 1) * limit //how many row to skip for pagination
+	//how mant row to skip
+	offset := (page - 1) * limit 
 
 	users, err := repository.GetUsers(search, limit, offset)
 	if err != nil {
@@ -39,7 +41,8 @@ func GetAdminUsers(pageStr string, limitStr string, search string) (*models.Admi
 		return nil, err
 	}
 
-	totalPages := int(math.Ceil(float64(totalCount) / float64(limit))) //calculate total page for pagination
+	//calculate total page 
+	totalPages := int(math.Ceil(float64(totalCount) / float64(limit))) 
 
 	//user response 
 	var userResponses []models.AdminUserResponse
