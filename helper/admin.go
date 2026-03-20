@@ -1,18 +1,17 @@
 package helper
 
 import (
+	"fmt"
 	"shoego/config"
 	"shoego/models"
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
 
 type authCustomClaimsAdmin struct {
-	Firstname string `json:"firstname"`
-	Lastname  string `json:"lastname"`
-	Email     string `json:"email"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
@@ -21,9 +20,8 @@ func GenerateTokenAdmin(admin models.AdminDetailsResponse) (string, error) {
 	cfg, _ := config.LoadConfig()
 
 	claims := &authCustomClaimsAdmin{
-		Firstname: admin.Firstname,
-		Lastname:  admin.Lastname,
-		Email:     admin.Email,
+		Name:  admin.Name,
+		Email: admin.Email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 48).Unix(),
 			IssuedAt:  time.Now().Unix(),

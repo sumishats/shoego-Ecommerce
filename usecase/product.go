@@ -282,6 +282,7 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		images = append(images, img.ImageURL)
 	}
 
+	//set product status is available or out of stock
 	status := "available"
 	if product.Stock <= 0 {
 		status = "out_of_stock"
@@ -292,6 +293,7 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		return nil, err
 	}
 
+	//related product images 
 	var relatedProducts []models.UserProductResponse
 	for _, p := range related {
 		var relImages []string

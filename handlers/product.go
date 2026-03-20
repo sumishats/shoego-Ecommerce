@@ -275,7 +275,7 @@ func GetUserProducts(c *gin.Context) {
 	search := c.Query("search")
 	sort := c.Query("sort")
 
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1")) 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
 	categoryID64, _ := strconv.ParseUint(c.DefaultQuery("category_id", "0"), 10, 64)
@@ -284,6 +284,7 @@ func GetUserProducts(c *gin.Context) {
 	minPrice, _ := strconv.ParseFloat(c.DefaultQuery("min_price", "0"), 64)
 	maxPrice, _ := strconv.ParseFloat(c.DefaultQuery("max_price", "0"), 64)
 
+	//url query params to struct
 	query := models.UserProductQuery{
 		Search:     search,
 		Sort:       sort,
@@ -326,6 +327,7 @@ func GetUserProductDetails(c *gin.Context) {
 	c.JSON(http.StatusOK, successRes)
 }
 
+//check product is currently availbale 
 func ValidateUserProductAvailability(c *gin.Context) {
 	idParam := c.Param("id")
 	productID64, err := strconv.ParseUint(idParam, 10, 64)

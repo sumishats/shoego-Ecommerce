@@ -39,10 +39,8 @@ func GoogleLogin(c *gin.Context) {
 // @Router /auth/google/callback [get]
 
 func GoogleCallback(c *gin.Context) {
-	//temp authentication code from google
-	//it used --> google does not end user details directly 
-	//send code to google with query params and google send access token and use access token to get user profile 
-	code := c.Query("code") //--> get code from url query params 
+	
+	code := c.Query("code") // get code from url query params 
 	if code == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "code not found"})
 		return
@@ -80,7 +78,7 @@ func GoogleCallback(c *gin.Context) {
 		}
 
 		userData = createdUser
-	} else { //if user already exist 
+	} else { 
 		userData = existingUser
 	}
 

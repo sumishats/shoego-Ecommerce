@@ -58,7 +58,7 @@ func GenerateTokenUsers(userID int, userEmail string, expirationTime time.Time) 
 func GenerateAccessToken(user models.SignupDetailResponse) (string, error) {
 
 	expirationTime := time.Now().Add(15 * time.Minute) //valid 15 minute 
-	tokenString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime) //use for protect api access
+	tokenString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime) 
 	if err != nil {
 		return "", err
 	}

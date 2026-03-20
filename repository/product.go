@@ -129,9 +129,7 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 	var products []domain.Product
 	var totalCount int64
 
-	db := database.DB.Model(&domain.Product{}).
-		Preload("Images").
-		Where("is_listed = ?", true)
+	db := database.DB.Model(&domain.Product{}).Preload("Images").Where("is_listed = ?", true)
 
 	if strings.TrimSpace(query.Search) != "" {
 		searchValue := "%" + strings.TrimSpace(query.Search) + "%"
@@ -154,6 +152,7 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 		db = db.Where("price <= ?", query.MaxPrice)
 	}
 
+	//sort product 
 	switch query.Sort {
 	case "price_asc":
 		db = db.Order("price ASC")
@@ -169,6 +168,7 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 		db = db.Order("created_at DESC")
 	}
 
+	//count total page 
 	if err := db.Count(&totalCount).Error; err != nil {
 		return nil, 0, err
 	}
@@ -183,13 +183,10 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 }
 
 func GetUserProductDetails(productID uint) (*domain.Product, error) {
+	//fetch  product details by id 
 	var product domain.Product
 
-	err := database.DB.
-		Preload("Images").
-		Preload("Category").
-		Where("id = ? AND is_listed = ?", productID, true).
-		First(&product).Error
+	err := database.DB.Preload("Images").Preload("Category").Where("id = ? AND is_listed = ?", productID, true).First(&product).Error
 
 	if err != nil {
 		return nil, err
@@ -199,14 +196,10 @@ func GetUserProductDetails(productID uint) (*domain.Product, error) {
 }
 
 func GetRelatedUserProducts(categoryID uint, productID uint, limit int) ([]domain.Product, error) {
+	//fetching related product same category 
 	var products []domain.Product
 
-	err := database.DB.
-		Preload("Images").
-		Where("category_id = ? AND id != ? AND is_listed = ?", categoryID, productID, true).
-		Order("created_at DESC").
-		Limit(limit).
-		Find(&products).Error
+	err := database.DB.Preload("Images").Where("category_id = ? AND id != ? AND is_listed = ?", categoryID, productID, true).Order("created_at DESC").Limit(limit).Find(&products).Error
 
 	if err != nil {
 		return nil, err
@@ -220,11 +213,7 @@ func GetRelatedUserProducts(categoryID uint, productID uint, limit int) ([]domai
 func GetUserCategories() ([]domain.Category, error) {
 	var categories []domain.Category
 
-	err := database.DB.
-		Model(&domain.Category{}).
-		Where("is_listed = ?", true).
-		Order("name ASC").
-		Find(&categories).Error
+	err := database.DB.Model(&domain.Category{}).Where("is_listed = ?", true).Order("name ASC").Find(&categories).Error
 
 	if err != nil {
 		return nil, err
