@@ -1,15 +1,15 @@
 ## SHOEGO E-commerce Project 
 ## Table of Contents
--[Introduction](#introduction)
--[Features](#features)
--[Technologies Used](#technologies-used)
--[Installation](#installation)
--[Configuration](#configuration)
--[API Documentation](#api-documentation)
--[Usage](#usage)
--[Authentication](#authentication)
--[Testing](#testing)
--[Contact](#contact)
+- [Introduction](#introduction)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Usage](#usage)
+- [Authentication](#authentication)
+- [Testing](#testing)
+- [Contact](#contact)
 
 ## Introduction
 Shoego is a backend e-commerce application built using Go, Gin, and GORM. It provides APIs for user authentication, admin management, product and category management, and other core e-commerce functionalities.
