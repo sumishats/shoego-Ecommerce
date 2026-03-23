@@ -28,7 +28,7 @@ func GetUsers(c *gin.Context) {
 func BlockUser(c *gin.Context) {
 	idParam := c.Param("id") 
 
-	//convert user id string to int 
+	
 	id64, err := strconv.ParseUint(idParam, 10, 64) 
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, "invalid user id", nil, err.Error())

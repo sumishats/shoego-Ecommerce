@@ -37,7 +37,7 @@ func AddProduct(req models.AddProductRequest,files []*multipart.FileHeader) erro
 	var images []domain.ProductImage
 
 	for _, file := range files {
-		path, err := helper.SaveProductImage(file, "./uploads/products")
+		path, err := helper.SaveProductImage(file, "./images")
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ func EditProduct(productID uint,req models.EditProductRequest,files []*multipart
 		var images []domain.ProductImage
 
 		for _, file := range files {
-			path, err := helper.SaveProductImage(file, "./uploads/products")
+			path, err := helper.SaveProductImage(file, "./images")
 			if err != nil {
 				return err
 			}

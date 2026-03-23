@@ -26,6 +26,9 @@ type Address struct {
 	State     string `json:"state"`
 	Pincode   string `json:"pincode"`
 	IsDefault bool   `json:"is_default"`
-	// CreatedAt   time.Time
-	// UpdatedAt   time.Time
+	
+}
+type BlacklistToken struct {
+	gorm.Model
+	Token string `json:"token" gorm:"unique;not null"`
 }

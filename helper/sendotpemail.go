@@ -18,11 +18,16 @@ func SendOTPEmail(email string, otp string) error {
 	smtpHost := cfg.SMTP_HOST
 	smtpPort := cfg.SMTP_PORT
 
-	message := []byte("Subject: Your OTP Verification\n\nYour OTP is: " + otp)
+	message := []byte("Subject: Shoego Account Verification OTP\n\n" +
+		"Hello,\n\n" +
+		"Thank you for using Shoego.\n\n" +
+		"Your OTP for verification is: " + otp + "\n\n" +
+		"This OTP is valid for 2 minutes.\n\n" +
+		"Please do not share this OTP with anyone.\n\n")
 
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
-	err = smtp.SendMail(smtpHost+":"+smtpPort,auth,from,[]string{email},message)
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{email}, message)
 
 	if err != nil {
 		return err
