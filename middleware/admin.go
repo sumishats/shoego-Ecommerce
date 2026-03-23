@@ -1,8 +1,9 @@
-package middileware
+package middleware
 
 import (
 	"net/http"
 	"shoego/helper"
+	"shoego/repository"
 	"shoego/response"
 	"strings"
 
@@ -33,15 +34,28 @@ func AuthorizationMiddleware() gin.HandlerFunc {
 		}
 
 		tokenpart := splitted[1]
-		_, err := helper.ValidateToken(tokenpart)
+
+		blacklisted, err := repository.IsTokenBlacklist(tokenpart)
+		if err != nil {
+			response := response.ClientResponse(http.StatusInternalServerError, "error checking blacklist token", nil, err.Error())
+			c.JSON(http.StatusInternalServerError, response)
+			c.Abort()
+			return
+		}
+
+		if blacklisted {
+			response := response.ClientResponse(http.StatusUnauthorized, "token is invalid or already logged out", nil, "blacklisted token")
+			c.JSON(http.StatusUnauthorized, response)
+			c.Abort()
+			return
+		}
+		_, err = helper.ValidateToken(tokenpart)
 		if err != nil {
 			response := response.ClientResponse(http.StatusUnauthorized, "Invalid token", nil, err.Error())
 			c.JSON(http.StatusUnauthorized, response)
 			c.Abort()
 			return
 		}
-
-		// c.Set("claims", tokenClaims)
 
 		c.Next()
 

@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"shoego/config"
 	"shoego/domain"
 
@@ -14,7 +15,7 @@ var DB *gorm.DB
 func ConnectDatabase(cfg config.Config) (*gorm.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBName, cfg.DBPassword)
 
-	fmt.Println("connecting database", cfg.DBName)
+	log.Println("connecting database", cfg.DBName)
 
 	db, dberr := gorm.Open(postgres.Open(psqlInfo), &gorm.Config{})
 
@@ -29,8 +30,9 @@ func ConnectDatabase(cfg config.Config) (*gorm.DB, error) {
 	DB.AutoMigrate(&domain.Product{})
 	DB.AutoMigrate(&domain.ProductImage{})
 	DB.AutoMigrate(&domain.Category{})
+	DB.AutoMigrate(&domain.BlacklistToken{})
 
-	fmt.Println("Database connected successfully")
+	log.Println("database connected successfully")
 
 	return DB, nil
 }

@@ -2,12 +2,13 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"net/mail"
 	"shoego/domain"
 	"shoego/helper"
 	"shoego/models"
 	"shoego/repository"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,13 +24,11 @@ func UsersignUp(user models.SignupDetail) error {
 		return errors.New("email already exists")
 	}
 
-	// hash password
 	hashedPassword, err := helper.PasswordHashing(user.Password)
 	if err != nil {
 		return err
 	}
 
-	// generate OTP
 	otp := helper.GenerateOTP()
 	expiry := time.Now().Add(2 * time.Minute)
 
@@ -46,7 +45,8 @@ func UsersignUp(user models.SignupDetail) error {
 
 	err = repository.SaveOTPFull(otpData)
 	if err != nil {
-		fmt.Println("OTP save error:", err)
+
+		log.Println("OTP save error", err)
 		return err
 	}
 	err = helper.SendOTPEmail(user.Email, otp)
@@ -54,7 +54,7 @@ func UsersignUp(user models.SignupDetail) error {
 		return err
 	}
 
-	fmt.Println("OTP sent:", otp)
+	log.Println("OTP sent", otp)
 	return nil
 }
 
@@ -75,10 +75,10 @@ func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 		return &models.TokenUser{}, models.ErrEmailNotFound
 	}
 
-	// Compare input password with hashed password in users table
 	err = bcrypt.CompareHashAndPassword([]byte(userDetails.Password), []byte(user.Password))
 	if err != nil {
-		fmt.Println("Password mismatch")
+		log.Println("password mismatch")
+
 		return &models.TokenUser{}, errors.New("hashed password not matching")
 	}
 
@@ -106,7 +106,6 @@ func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 	}, nil
 }
 
-// get user profile details and address details by user id
 func GetUserProfile(userID uint) (*models.UserProfileResponse, error) {
 	user, err := repository.GetUserByID(userID)
 	if err != nil {
@@ -118,7 +117,7 @@ func GetUserProfile(userID uint) (*models.UserProfileResponse, error) {
 		return nil, err
 	}
 
-	//address convert to response 
+	//address convert to response
 	var addressResp []models.AddressResponse
 	for _, addr := range addresses {
 		addressResp = append(addressResp, models.AddressResponse{
@@ -144,11 +143,9 @@ func GetUserProfile(userID uint) (*models.UserProfileResponse, error) {
 	}, nil
 }
 
-// edit user profile details by user id and send to repository for update in db
 func EditUserProfile(userID uint, req models.EditProfileRequest) error {
 	return repository.UpdateUserProfile(userID, req.Name, req.Phone, req.ProfileImage)
 }
-
 
 func ChangePassword(userID uint, req models.ChangePasswordRequest) error {
 	user, err := repository.GetUserByID(userID)
@@ -169,9 +166,8 @@ func ChangePassword(userID uint, req models.ChangePasswordRequest) error {
 	return repository.UpdateUserPassword(userID, hashedPassword)
 }
 
-
 func RequestEmailChange(userID uint, newEmail string) error {
-	
+
 	otp := helper.GenerateOTP()
 
 	err := repository.SaveOTPFull(domain.OTPVerification{
@@ -186,7 +182,7 @@ func RequestEmailChange(userID uint, newEmail string) error {
 	return helper.SendOTPEmail(newEmail, otp)
 }
 
-// verify email , if valid update email in db 
+// verify email , if valid update email in db
 func VerifyEmailChange(userID uint, req models.VerifyEmailChangeRequest) error {
 	_, err := repository.VerifyOTP(req.NewEmail, req.OTP, "email_change")
 	if err != nil {
@@ -208,7 +204,6 @@ func AddUserAddress(userID uint, req models.AddAddressRequest) error {
 		_ = repository.ClearDefaultAddresses(userID)
 	}
 
-	
 	address := domain.Address{
 		UserID:    userID,
 		Name:      req.Name,
@@ -239,7 +234,7 @@ func EditUserAddress(userID uint, addressID uint, req models.EditAddressRequest)
 	}
 
 	return repository.UpdateAddress(addressID, map[string]interface{}{
-		"name":  req.Name,
+		"name":       req.Name,
 		"phone":      req.Phone,
 		"house_name": req.HouseName,
 		"street":     req.Street,
@@ -261,4 +256,23 @@ func DeleteUserAddress(userID uint, addressID uint) error {
 	}
 
 	return repository.DeleteAddress(addressID)
+}
+
+func Logout(authHeader string) error {
+	if authHeader == "" {
+		return errors.New("authorization header is empty")
+	}
+
+	if !strings.HasPrefix(authHeader, "Bearer") {
+		return errors.New("invalid authorization format")
+	}
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if token == "" {
+		return errors.New("token is empty")
+	}
+	err := repository.SaveBlacklistToken(token)
+	if err != nil {
+		return err
+	}
+	return nil
 }

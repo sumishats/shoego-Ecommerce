@@ -57,3 +57,22 @@ func AdminLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, succesRes)
 
 }
+
+func AdminLogout(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		errRes := response.ClientResponse(http.StatusBadRequest, "authorization header is missing", nil, "no token found")
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	err := usecase.AdminLogout(authHeader)
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to logout admin", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK, "admin logout successful", nil, nil)
+	c.JSON(http.StatusOK, successRes)
+}

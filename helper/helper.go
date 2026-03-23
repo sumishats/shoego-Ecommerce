@@ -68,8 +68,8 @@ func GenerateAccessToken(user models.SignupDetailResponse) (string, error) {
 
 func GenerateRefreshToken(user models.SignupDetailResponse) (string, error) {
 
-	expirationTime := time.Now().Add(24 * 90 * time.Hour) //valid 90 day
-	tokeString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime) //use for gew new access token when access token expired
+	expirationTime := time.Now().Add(24 * 90 * time.Hour) 
+	tokeString, err := GenerateTokenUsers(user.ID, user.Email, expirationTime) 
 	if err != nil {
 		return "", err
 	}

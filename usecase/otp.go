@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"shoego/domain"
 	"shoego/helper"
 	"shoego/models"
@@ -15,7 +15,6 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 
 	data.OTP = strings.TrimSpace(data.OTP)
 
-	
 	otpData, err := repository.VerifyOTP(data.Email, data.OTP, "signup")
 	if err != nil {
 		return nil, err
@@ -59,7 +58,6 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 		Phone: userData.Phone,
 	}
 
-	
 	accessToken, _ := helper.GenerateAccessToken(userResp)
 	refreshToken, _ := helper.GenerateRefreshToken(userResp)
 
@@ -102,7 +100,8 @@ func ResendOTP(email string) error {
 		return err
 	}
 
-	fmt.Println("Resend OTP:", otp)
+	log.Println("Resend OTP:", otp)
+
 	return nil
 }
 
@@ -155,7 +154,6 @@ func ResetPassword(email, otp, newPassword string) (*models.TokenUser, error) {
 		return nil, err
 	}
 
-	
 	_ = repository.DeleteOTP(email, "forgot_password")
 
 	//user response after reset password

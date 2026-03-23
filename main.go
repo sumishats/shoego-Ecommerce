@@ -12,7 +12,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-//	@title			shoego API
+//	@title			Shoego API
 //	@version		1.0
 //	@description	API for ecommerce website
 //	@securityDefinitions.apiKey	Bearer
@@ -51,6 +51,10 @@ func main() {
 	}
 
 	router := gin.Default()
+
+	// serve static product images
+	router.Static("/images", "./images")
+
 	routes.UserRoutes(router.Group("/"), db)
 	routes.AdminRoutes(router.Group("/admin"), db)
 
