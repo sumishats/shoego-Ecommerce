@@ -1,24 +1,24 @@
 package models
 
-//admin side product and category 
+// admin side product and category
 type AddProductRequest struct {
-	Name        string
-	Description string
-	BrandID     uint
-	SKU         string
-	Price       float64
-	Stock       int
-	CategoryID  uint
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	BrandID     uint    `json:"brand_id"`
+	SKU         string  `json:"sku"`
+	Price       float64 `json:"price"`
+	Stock       int     `json:"stock"`
+	CategoryID  uint    `json:"category_id"`
 }
 
 type EditProductRequest struct {
-	Name        string
-	Description string
-	BrandID     uint
-	SKU         string
-	Price       float64
-	Stock       int
-	CategoryID  uint
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	BrandID     uint    `json:"brand_id"`
+	SKU         string  `json:"sku"`
+	Price       float64 `json:"price"`
+	Stock       int     `json:"stock"`
+	CategoryID  uint    `json:"category_id"`
 }
 
 type ProductResponse struct {
@@ -67,7 +67,7 @@ type CategoryListResponse struct {
 	TotalPages  int                `json:"total_pages"`
 }
 
-//user side product and category 
+//user side product and category
 
 type UserProductQuery struct {
 	Search     string
