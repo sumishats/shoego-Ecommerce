@@ -108,6 +108,8 @@ type UserProductDetailResponse struct {
 	BrandID         uint                  `json:"brand_id"`
 	SKU             string                `json:"sku"`
 	Price           float64               `json:"price"`
+	DiscountPrice   float64               `json:"discount_price"`
+	Rating          float64               `json:"rating"`
 	Stock           int                   `json:"stock"`
 	CategoryID      uint                  `json:"category_id"`
 	CategoryName    string                `json:"category_name"`
@@ -116,7 +118,13 @@ type UserProductDetailResponse struct {
 	Status          string                `json:"status"`
 	Breadcrumbs     []string              `json:"breadcrumbs"`
 	Highlights      []string              `json:"highlights"`
+	Reviews         []ReviewResponse      `json:"reviews"`
 	RelatedProducts []UserProductResponse `json:"related_products"`
+}
+type ReviewResponse struct {
+	UserName string `json:"user_name"`
+	Comment  string `json:"comment"`
+	Rating   int    `json:"rating"`
 }
 
 type UserCategoryResponse struct {

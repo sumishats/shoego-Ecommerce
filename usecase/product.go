@@ -296,7 +296,8 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 	}
 
 	//related product images
-	var relatedProducts []models.UserProductResponse
+	//var relatedProducts []models.UserProductResponse
+	relatedProducts := []models.UserProductResponse{}
 	for _, p := range related {
 		var relImages []string
 		for _, img := range p.Images {
@@ -318,23 +319,31 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 	}
 
 	return &models.UserProductDetailResponse{
-		ID:           product.ID,
-		Name:         product.Name,
-		Description:  product.Description,
-		BrandID:      product.BrandID,
-		SKU:          product.SKU,
-		Price:        product.Price,
-		Stock:        product.Stock,
-		CategoryID:   product.CategoryID,
-		CategoryName: product.Category.Name,
-		IsListed:     product.IsListed,
-		Images:       images,
-		Status:       status,
-		Breadcrumbs:  []string{"Home", "Products", product.Category.Name, product.Name},
+		ID:            product.ID,
+		Name:          product.Name,
+		Description:   product.Description,
+		BrandID:       product.BrandID,
+		SKU:           product.SKU,
+		Price:         product.Price,
+		DiscountPrice: product.Price * 0.9,
+		Rating:        4.2,
+		Stock:         product.Stock,
+		CategoryID:    product.CategoryID,
+		CategoryName:  product.Category.Name,
+		IsListed:      product.IsListed,
+		Images:        images,
+		Status:        status,
+		Breadcrumbs:   []string{"Home", "Products", product.Category.Name, product.Name},
 		Highlights: []string{
 			"Comfortable for daily wear",
-			"Durable quality",
 			"Stylish design",
+		},
+		Reviews: []models.ReviewResponse{
+			{
+				UserName: "Ammu",
+				Comment:  "Good quality and comfortable product",
+				Rating:   5,
+			},
 		},
 		RelatedProducts: relatedProducts,
 	}, nil
