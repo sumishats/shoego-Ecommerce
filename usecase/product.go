@@ -354,8 +354,8 @@ func ValidateUserProductAvailability(productID uint) error {
 }
 
 // user category
-func GetUserCategories() ([]models.UserCategoryResponse, error) {
-	categories, err := repository.GetUserCategories()
+func GetUserCategories(search string) ([]models.UserCategoryResponse, error) {
+	categories, err := repository.GetUserCategories(search)
 	if err != nil {
 		return nil, err
 	}
