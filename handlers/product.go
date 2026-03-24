@@ -352,7 +352,8 @@ func ValidateUserProductAvailability(c *gin.Context) {
 //user category
 
 func GetUserCategories(c *gin.Context) {
-	data, err := usecase.GetUserCategories()
+	search := c.Query("search") 
+	data, err := usecase.GetUserCategories(search)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusInternalServerError, "failed to fetch categories", nil, err.Error())
 		c.JSON(http.StatusInternalServerError, errRes)
