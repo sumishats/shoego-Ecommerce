@@ -31,7 +31,18 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	}
 
 	{
+		//check product availability
 		userProtected.GET("/products/:id/validate", handlers.ValidateUserProductAvailability)
+	}
+
+	{
+		//cart management
+
+		userProtected.POST("/cart", handlers.AddToCart)
+		userProtected.GET("/cart", handlers.GetCart)
+		userProtected.PATCH("/cart/:product_id", handlers.UpdateCartQuantity)
+		userProtected.DELETE("/cart/:product_id", handlers.RemoveCartItem)
+		userProtected.GET("/cart/validate", handlers.ValidateCartCheckout)
 	}
 
 	{
@@ -42,6 +53,7 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		userProtected.POST("/profile/request-email-change", handlers.RequestEmailChange)
 		userProtected.POST("/profile/verify-email-change", handlers.VerifyEmailChange)
 
+		//address
 		userProtected.POST("/address", handlers.AddAddress)
 		userProtected.PUT("/address/:id", handlers.EditAddress)
 		userProtected.DELETE("/address/:id", handlers.DeleteAddress)
