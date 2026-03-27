@@ -99,10 +99,9 @@ func UserLoginWithPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, successres)
 }
 
-//user details profile 
-
+//user profile
 func GetProfile(c *gin.Context) {
-	//get user id from token
+	
 	userIDVal, exists := c.Get("user_id")
 	if !exists {
 		errRes := response.ClientResponse(http.StatusUnauthorized, "user not found in token", nil, nil)
@@ -150,7 +149,7 @@ func EditProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, successRes)
 }
 
-//user cam change password 
+
 func ChangePassword(c *gin.Context) {
 	userIDVal, _ := c.Get("user_id")
 	userID := userIDVal.(uint)
@@ -244,9 +243,8 @@ func EditAddress(c *gin.Context) {
 	userID := userIDVal.(uint)
 
 	idParam := c.Param("id")
-	//convert id from string to uint
 	id64, err := strconv.ParseUint(idParam, 10, 64)
-	
+
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, "invalid address id", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)
@@ -292,4 +290,23 @@ func DeleteAddress(c *gin.Context) {
 
 	successRes := response.ClientResponse(http.StatusOK, "address deleted successfully", nil, nil)
 	c.JSON(http.StatusOK, successRes)
+}
+
+func Logout(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		errRes := response.ClientResponse(http.StatusBadRequest, "authorization header is missing", nil, "no token found")
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	err := usecase.Logout(authHeader)
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to logout", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	successRes:=response.ClientResponse(http.StatusOK,"logout successful",nil,nil)
+	c.JSON(http.StatusOK,successRes)
 }

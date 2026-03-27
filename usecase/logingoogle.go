@@ -20,7 +20,6 @@ func GetGoogleUser(code string) (*models.GoogleUser, error) {
 		return nil, err
 	}
 
-	// Use the access token to get user info from Google
 	
 	resp, err := http.Get(
 		"https://www.googleapis.com/oauth2/v2/userinfo?access_token=" +token.AccessToken,
@@ -35,7 +34,7 @@ func GetGoogleUser(code string) (*models.GoogleUser, error) {
 	body, _ := io.ReadAll(resp.Body)
 
 	var user models.GoogleUser
-	json.Unmarshal(body, &user) //convert json to struct
+	json.Unmarshal(body, &user) 
 
 	return &user, nil
 }

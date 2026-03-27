@@ -11,8 +11,8 @@ import (
 	"strconv"
 )
 
-//admin product 
-func AddProduct(req models.AddProductRequest,files []*multipart.FileHeader) error {
+// admin product
+func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) error {
 
 	if len(files) < 3 {
 		return errors.New("minimum 3 images required")
@@ -37,7 +37,7 @@ func AddProduct(req models.AddProductRequest,files []*multipart.FileHeader) erro
 	var images []domain.ProductImage
 
 	for _, file := range files {
-		path, err := helper.SaveProductImage(file, "./uploads/products")
+		path, err := helper.SaveProductImage(file, "./images")
 		if err != nil {
 			return err
 		}
@@ -51,8 +51,7 @@ func AddProduct(req models.AddProductRequest,files []*multipart.FileHeader) erro
 	return repository.CreateProductImages(images)
 }
 
-
-func EditProduct(productID uint,req models.EditProductRequest,files []*multipart.FileHeader,) error {
+func EditProduct(productID uint, req models.EditProductRequest, files []*multipart.FileHeader) error {
 
 	product, err := repository.GetProductByID(productID)
 	if err != nil {
@@ -86,7 +85,7 @@ func EditProduct(productID uint,req models.EditProductRequest,files []*multipart
 		var images []domain.ProductImage
 
 		for _, file := range files {
-			path, err := helper.SaveProductImage(file, "./uploads/products")
+			path, err := helper.SaveProductImage(file, "./images")
 			if err != nil {
 				return err
 			}
@@ -130,7 +129,10 @@ func GetProducts(pageStr, limitStr string) (*models.ProductListResponse, error) 
 		return nil, err
 	}
 
-	totalCount, _ := repository.CountProducts()
+	totalCount, err := repository.CountProducts()
+	if err != nil {
+		return nil, err
+	}
 	totalPages := int(math.Ceil(float64(totalCount) / float64(limit)))
 
 	var resp []models.ProductResponse
@@ -142,7 +144,7 @@ func GetProducts(pageStr, limitStr string) (*models.ProductListResponse, error) 
 			images = append(images, img.ImageURL)
 		}
 
-		//response for each product 
+		//response for each product
 		resp = append(resp, models.ProductResponse{
 			ID:          p.ID,
 			Name:        p.Name,
@@ -222,7 +224,7 @@ func GetCategories(search string, page, limit int) (map[string]interface{}, erro
 	}, nil
 }
 
-//user product 
+//user product
 
 func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResponse, error) {
 	if query.Page <= 0 {
@@ -293,7 +295,7 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		return nil, err
 	}
 
-	//related product images 
+	//related product images
 	var relatedProducts []models.UserProductResponse
 	for _, p := range related {
 		var relImages []string
@@ -351,9 +353,9 @@ func ValidateUserProductAvailability(productID uint) error {
 	return nil
 }
 
-//user category 
-func GetUserCategories() ([]models.UserCategoryResponse, error) {
-	categories, err := repository.GetUserCategories()
+// user category
+func GetUserCategories(search string) ([]models.UserCategoryResponse, error) {
+	categories, err := repository.GetUserCategories(search)
 	if err != nil {
 		return nil, err
 	}

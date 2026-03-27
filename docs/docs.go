@@ -1987,7 +1987,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Ak eCommerce API",
+	Title:            "Shoego eCommerce API",
 	Description:      "API for ecommerce website",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -2,29 +2,27 @@ package router
 
 import (
 	"shoego/handlers"
-	"shoego/middileware"
+	"shoego/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
-	// public admin route
+
 	r.POST("/login", handlers.AdminLogin)
 
-	// protected admin routes
 	adminProtected := r.Group("/")
-	adminProtected.Use(middileware.AuthorizationMiddleware())
+	adminProtected.Use(middleware.AuthorizationMiddleware())
 
 	{
-		//user management 
+		//user management
 		adminProtected.GET("/users", handlers.GetUsers)
 		adminProtected.PATCH("/block-user/:id", handlers.BlockUser)
 		adminProtected.PATCH("/unblock-user/:id", handlers.UnblockUser)
 	}
 	{
 		// product management
-
 		adminProtected.POST("/products", handlers.AddProduct)
 		adminProtected.PUT("/products/:id", handlers.EditProduct)
 		adminProtected.DELETE("/products/:id", handlers.DeleteProduct)
@@ -38,5 +36,9 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.GET("/categories", handlers.GetCategories)
 	}
 
+	{
+		//admin logout
+		adminProtected.POST("/logout", handlers.AdminLogout)
+	}
 	return r
 }

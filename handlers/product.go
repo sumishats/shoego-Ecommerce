@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
 //admin product management
 
 func AddProduct(c *gin.Context) {
@@ -20,7 +21,7 @@ func AddProduct(c *gin.Context) {
 	req.Description = c.PostForm("description")
 	req.SKU = c.PostForm("sku")
 
-	//price convert to number
+	
 	price, err := strconv.ParseFloat(c.PostForm("price"), 64)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, "invalid price", nil, err.Error())
@@ -351,7 +352,8 @@ func ValidateUserProductAvailability(c *gin.Context) {
 //user category
 
 func GetUserCategories(c *gin.Context) {
-	data, err := usecase.GetUserCategories()
+	search := c.Query("search") 
+	data, err := usecase.GetUserCategories(search)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusInternalServerError, "failed to fetch categories", nil, err.Error())
 		c.JSON(http.StatusInternalServerError, errRes)

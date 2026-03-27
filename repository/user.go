@@ -99,7 +99,7 @@ func CreateGoogleUser(user domain.User) (*domain.User, error) {
 	return &user, nil
 }
 
-func GetUserByID(userID uint) (*domain.User, error) { 
+func GetUserByID(userID uint) (*domain.User, error) {
 	//get user info by id from db
 	var user domain.User
 	err := database.DB.First(&user, userID).Error
@@ -109,31 +109,31 @@ func GetUserByID(userID uint) (*domain.User, error) {
 	return &user, nil
 }
 
-func UpdateUserProfile(userID uint, name, phone, profileImage string) error { 
+func UpdateUserProfile(userID uint, name, phone, profileImage string) error {
 	//send edited  info to db
 	return database.DB.Model(&domain.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-			"name":          name,
-			"phone":         phone,
-			"profile_image": profileImage,
-		}).Error
+		"name":          name,
+		"phone":         phone,
+		"profile_image": profileImage,
+	}).Error
 }
 
-//if email is valid store to db 
-func UpdateUserEmail(userID uint, newEmail string) error { 
+// if email is valid store to db
+func UpdateUserEmail(userID uint, newEmail string) error {
 	return database.DB.Model(&domain.User{}).Where("id = ?", userID).Update("email", newEmail).Error
 }
 
-//send update password info to db
-func UpdateUserPassword(userID uint, hashedPassword string) error { 
+// send update password info to db
+func UpdateUserPassword(userID uint, hashedPassword string) error {
 	return database.DB.Model(&domain.User{}).Where("id = ?", userID).Update("password", hashedPassword).Error
 }
 
-//insert new Address  in db 
-func AddAddress(address domain.Address) error { 
+// insert new Address  in db
+func AddAddress(address domain.Address) error {
 	return database.DB.Create(&address).Error
 }
 
-func GetAddressesByUserID(userID uint) ([]domain.Address, error) { 
+func GetAddressesByUserID(userID uint) ([]domain.Address, error) {
 	var addresses []domain.Address
 	err := database.DB.Where("user_id = ?", userID).Find(&addresses).Error
 	if err != nil {
@@ -142,8 +142,7 @@ func GetAddressesByUserID(userID uint) ([]domain.Address, error) {
 	return addresses, nil
 }
 
-
-func GetAddressByID(addressID uint) (*domain.Address, error) { 
+func GetAddressByID(addressID uint) (*domain.Address, error) {
 	var address domain.Address
 	err := database.DB.First(&address, addressID).Error
 	if err != nil {
@@ -152,16 +151,50 @@ func GetAddressByID(addressID uint) (*domain.Address, error) {
 	return &address, nil
 }
 
-func UpdateAddress(addressID uint, data map[string]interface{}) error { 
+func UpdateAddress(addressID uint, data map[string]interface{}) error {
 	return database.DB.Model(&domain.Address{}).Where("id = ?", addressID).Updates(data).Error
 }
 
-func DeleteAddress(addressID uint) error { 
+func DeleteAddress(addressID uint) error {
 	return database.DB.Delete(&domain.Address{}, addressID).Error
 }
 
-//user set new default address ,clear old default address
-func ClearDefaultAddresses(userID uint) error { 
-	
+// user set new default address ,clear old default address
+func ClearDefaultAddresses(userID uint) error {
+
 	return database.DB.Model(&domain.Address{}).Where("user_id = ?", userID).Update("is_default", false).Error
+}
+
+func SaveBlacklistToken(token string) error {
+	var existing domain.BlacklistToken
+
+	err := database.DB.Where("token = ?", token).First(&existing).Error
+	if err == nil {
+		return errors.New("token already logged out")
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	blacklistedToken := domain.BlacklistToken{
+		Token: token,
+	}
+
+	return database.DB.Create(&blacklistedToken).Error
+}
+
+func IsTokenBlacklist(token string) (bool, error) {
+	var blacklistedToken domain.BlacklistToken
+
+	err := database.DB.Where("token = ?", token).First(&blacklistedToken).Error
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+
+	return false, err
 }

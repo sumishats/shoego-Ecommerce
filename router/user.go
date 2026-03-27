@@ -2,7 +2,7 @@ package router
 
 import (
 	"shoego/handlers"
-	"shoego/middileware"
+	"shoego/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,16 +19,16 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	r.GET("/auth/google/login", handlers.GoogleLogin)
 	r.GET("/auth/google/callback", handlers.GoogleCallback) //response from google
 
-
-	// product and category browsing
+	// product and category
 	r.GET("/products", handlers.GetUserProducts)
 	r.GET("/products/:id", handlers.GetUserProductDetails)
 	r.GET("/categories", handlers.GetUserCategories)
 
-	
-	
 	userProtected := r.Group("/")
-	userProtected.Use(middileware.AuthMiddleware())
+	userProtected.Use(middleware.AuthMiddleware())
+	{
+		userProtected.POST("/logout", handlers.Logout)
+	}
 
 	{
 		userProtected.GET("/products/:id/validate", handlers.ValidateUserProductAvailability)
