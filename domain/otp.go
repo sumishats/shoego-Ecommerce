@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type OTPVerification struct {
-	ID        uint      `gorm:"primaryKey"`
+	ID        uint `gorm:"primaryKey"`
 	Email     string
 	OTP       string
 	Name      string

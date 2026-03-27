@@ -1,16 +1,15 @@
 package models
 
-
 type VerifyOTP struct {
-    Email    string `json:"email"`
-    OTP      string `json:"otp"`
-    Name     string `json:"name"`     // For signup
-    Password string `json:"password"` 
-    Phone    string `json:"phone"`    
+	Email    string `json:"email"`
+	OTP      string `json:"otp"`
+	Name     string `json:"name"` // For signup
+	Password string `json:"password"`
+	Phone    string `json:"phone"`
 }
 
 type ResendOTP struct {
-	Email string `json:"email"`
+	Email string `json:"email" binding:"required,email"`
 }
 type TokenUser struct {
 	User         SignupDetailResponse `json:"user"`
@@ -18,7 +17,7 @@ type TokenUser struct {
 	RefreshToken string               `json:"refresh_token"`
 }
 
-type ForgotPassword struct{
+type ForgotPassword struct {
 	Email string `json:"email"`
 }
 

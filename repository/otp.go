@@ -9,11 +9,11 @@ import (
 
 	"gorm.io/gorm"
 )
-//save otp in databse 
+
+// save otp in databse
 func SaveOTPFull(data domain.OTPVerification) error {
-	
-	//insert user info in db
-	err := database.DB.Create(&data).Error 
+
+	err := database.DB.Create(&data).Error
 	if err != nil {
 		fmt.Println("DB Insert Error:", err)
 		return err
@@ -27,9 +27,8 @@ func CheckOTPResendAllowed(email string) (bool, error) {
 
 	var otp domain.OTPVerification
 
-	//find otp for email and check expire or not 
-	err := database.DB.Where("email = ?", email).Order("created_at desc").First(&otp).Error 
-	
+	err := database.DB.Where("email = ? AND type = ?", email, "signup").Order("created_at desc").First(&otp).Error
+
 	if err != nil {
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -39,8 +38,8 @@ func CheckOTPResendAllowed(email string) (bool, error) {
 		return false, err
 	}
 
-	//if otp create less than 30 sec not allow resend 
-	if time.Since(otp.CreatedAt) < 30*time.Second { 
+	//if otp create less than 2 minutes not allow resend
+	if time.Since(otp.CreatedAt) < 2*time.Minute {
 		return false, nil
 	}
 
@@ -51,9 +50,8 @@ func VerifyOTP(email, otp, otpType string) (domain.OTPVerification, error) {
 
 	var otpData domain.OTPVerification
 
-	//find matching email and otp and type is signup or other
-	err := database.DB.Where("email = ? AND otp = ? AND type = ?", email, otp, otpType).First(&otpData).Error
-
+	err := database.DB.Where("email = ? AND otp = ? AND type = ?", email, otp, otpType).Order("created_at desc").First(&otpData).Error
+	
 	return otpData, err
 }
 
@@ -73,7 +71,7 @@ func GetSignupDataFromOTP(email string) (*domain.OTPVerification, error) {
 	var otp domain.OTPVerification
 
 	//find latest otp for email and type signup
-	err := database.DB.Where("email = ? AND type = ?", email, "signup").Order("created_at desc").First(&otp).Error 
+	err := database.DB.Where("email = ? AND type = ?", email, "signup").Order("created_at desc").First(&otp).Error
 
 	if err != nil {
 		return nil, err
@@ -82,8 +80,16 @@ func GetSignupDataFromOTP(email string) (*domain.OTPVerification, error) {
 	return &otp, nil
 }
 
+func UpdateSignupOTP(id uint, otp string, expiry time.Time) error {
+	return database.DB.Model(&domain.OTPVerification{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"otp":otp,"expires_at": expiry,"created_at": time.Now(),}).Error
+}
+
+
 func DeleteOTP(email string, otpType string) error {
-	return database.DB.Exec("DELETE FROM otp_verifications WHERE email = ? AND type = ?", email, otpType).Error
+
+	return database.DB.Where("email = ? AND type = ?", email, otpType).Delete(&domain.OTPVerification{}).Error
 }
 
 func UpdatePassword(email, newPassword string) (*domain.User, error) {

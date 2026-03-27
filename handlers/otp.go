@@ -18,23 +18,25 @@ import (
 // @Failure 500 {object} response.Response{}
 // @Router /send-otp [post]
 
-func ResendOTP(c *gin.Context) {
 
+func ResendOTP(c *gin.Context) {
 	var req models.ResendOTP
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, "invalid input")
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid input", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
 
 	err := usecase.ResendOTP(req.Email)
-
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to resend otp", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
 
-	c.JSON(http.StatusOK, "OTP sent again")
+	successRes := response.ClientResponse(http.StatusOK, "OTP sent again", nil, nil)
+	c.JSON(http.StatusOK, successRes)
 }
 
 // @Summary Verify OTP
@@ -72,13 +74,7 @@ func VerifyOTP(c *gin.Context) {
 		Phone: user.User.Phone,
 	}
 	// Send success response
-	successRes := response.ClientResponse(
-		http.StatusOK,
-		"OTP verified successfully",
-		userRes,
-		nil,
-	)
-
+	successRes := response.ClientResponse(http.StatusOK,"OTP verified successfully",userRes,nil,)
 	c.JSON(http.StatusOK, successRes)
 }
 
@@ -132,7 +128,7 @@ func ResetPassword(c *gin.Context) {
 	}
 
 	userToken, err := usecase.ResetPassword(req.Email, req.OTP, req.NewPassword)
-	
+
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, err.Error(), nil, nil)
 		c.JSON(http.StatusBadRequest, errRes)
