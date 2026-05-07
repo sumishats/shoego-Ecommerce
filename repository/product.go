@@ -14,7 +14,7 @@ func CreateProduct(product *domain.Product) error {
 	return database.DB.Create(product).Error
 }
 
-// create a new images into product_images table
+// insert new images into productimages table
 func CreateProductImages(images []domain.ProductImage) error {
 	return database.DB.Create(&images).Error
 }
@@ -28,7 +28,7 @@ func GetProductByID(productID uint) (*domain.Product, error) {
 	return &product, nil
 }
 
-// get products with images , desc order and pagination
+
 func GetProducts(limit int, offset int) ([]domain.Product, error) {
 	var products []domain.Product
 
@@ -61,7 +61,7 @@ func DeleteProductImages(productID uint) error {
 	return database.DB.Where("product_id = ?", productID).Delete(&domain.ProductImage{}).Error
 }
 
-// find the product by id and delete the product
+
 func SoftDeleteProduct(productID uint) error {
 	return database.DB.Delete(&domain.Product{}, productID).Error
 }
@@ -127,10 +127,7 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 	var products []domain.Product
 	var totalCount int64
 
-	db := database.DB.Model(&domain.Product{}).
-		Preload("Images").
-		Joins("JOIN categories ON categories.id = products.category_id").
-		Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
+	db := database.DB.Model(&domain.Product{}).Preload("Images").Joins("JOIN categories ON categories.id = products.category_id").Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
 
 	if strings.TrimSpace(query.Search) != "" {
 		searchValue := "%" + strings.TrimSpace(query.Search) + "%"
@@ -187,12 +184,7 @@ func GetUserProductDetails(productID uint) (*domain.Product, error) {
 	//fetch  product details by id
 	var product domain.Product
 
-	//err := database.DB.Preload("Images").Preload("Category").Where("id = ? AND is_listed = ?", productID, true).First(&product).Error
-
-	err := database.DB.Model(&domain.Product{}).
-		Preload("Images").
-		Preload("Category").
-		Joins("JOIN categories ON categories.id = products.category_id").
+	err := database.DB.Model(&domain.Product{}).Preload("Images").Preload("Category").Joins("JOIN categories ON categories.id = products.category_id").
 		Where("products.id = ? AND products.is_listed = ? AND categories.is_listed = ?", productID, true, true).
 		First(&product).Error
 
@@ -207,10 +199,7 @@ func GetRelatedUserProducts(categoryID uint, productID uint, limit int) ([]domai
 	//fetching related product same category
 	var products []domain.Product
 
-	//err := database.DB.Preload("Images").Where("category_id = ? AND id != ? AND is_listed = ?", categoryID, productID, true).Order("created_at DESC").Limit(limit).Find(&products).Error
-	err := database.DB.Model(&domain.Product{}).
-		Preload("Images").
-		Joins("JOIN categories ON categories.id = products.category_id").
+	err := database.DB.Model(&domain.Product{}).Preload("Images").Joins("JOIN categories ON categories.id = products.category_id").
 		Where("products.category_id = ? AND products.id != ? AND products.is_listed = ? AND categories.is_listed = ?", categoryID, productID, true, true).
 		Order("created_at DESC").
 		Limit(limit).

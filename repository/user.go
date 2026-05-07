@@ -5,6 +5,7 @@ import (
 	"shoego/database"
 	"shoego/domain"
 	"shoego/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,6 +25,24 @@ func CheckingEmailValidation(email string) (*domain.User, error) {
 	}
 
 	return &user, nil
+}
+
+func CheckExistingOTP(email string) (*domain.OTPVerification, error) {
+
+	var otp domain.OTPVerification
+
+	err := database.DB.
+		Where("email = ? AND type = ? AND expires_at > ?", email, "signup", time.Now()).
+		First(&otp).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &otp, nil
 }
 
 func CheckingPhoneExists(phone string) (*domain.User, error) {

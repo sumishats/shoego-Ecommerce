@@ -11,8 +11,8 @@ type Product struct {
 	Price       float64
 	Stock       int
 	CategoryID  uint
-	Category    Category       `gorm:"foreignKey:CategoryID"`
-	IsListed    bool 
+	Category    Category `gorm:"foreignKey:CategoryID"`
+	IsListed    bool
 	Images      []ProductImage `gorm:"foreignKey:ProductID"`
 }
 

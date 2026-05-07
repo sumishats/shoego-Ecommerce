@@ -44,6 +44,30 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		userProtected.DELETE("/cart/:product_id", handlers.RemoveCartItem)
 		userProtected.GET("/cart/validate", handlers.ValidateCartCheckout)
 	}
+	{
+		//wishlist management
+
+		userProtected.POST("/wishlist", handlers.AddToWishlist)
+		userProtected.GET("/wishlist", handlers.GetWishlist)
+		userProtected.DELETE("/wishlist/:product_id", handlers.RemoveFromWishlist)
+
+	}
+	{
+		//checkout management
+		userProtected.GET("/checkout", handlers.GetCheckoutPage)
+		userProtected.POST("/checkout/place-order", handlers.PlaceCODOrder)
+		userProtected.GET("/order-success/:order_id", handlers.GetOrderSuccess)
+	}
+	{
+		//order management
+		userProtected.GET("/orders", handlers.GetUserOrders)
+		userProtected.GET("/orders/:order_id", handlers.GetOrderDetail)
+		userProtected.PATCH("/orders/:order_id/cancel", handlers.CancelOrder)
+		userProtected.PATCH("/orders/:order_id/items/:item_id/cancel", handlers.CancelOrderItem)
+		userProtected.PATCH("/orders/:order_id/return", handlers.ReturnOrder)
+		userProtected.PATCH("/orders/:order_id/items/:item_id/return", handlers.ReturnOrderItem)
+		userProtected.GET("/orders/:order_id/invoice", handlers.DownloadInvoice)
+	}
 
 	{
 		// user profile management

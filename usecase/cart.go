@@ -36,7 +36,7 @@ func AddToCart(userID, productID uint) error {
 		return err
 	}
 
-	//check if item already in cart
+	
 	item, err := repository.GetCartItem(cart.ID, productID)
 	if err == nil {
 		newQty := item.Quantity + 1
@@ -49,15 +49,31 @@ func AddToCart(userID, productID uint) error {
 			return errors.New("maximum quantity limit reached")
 		}
 
-		return repository.UpdateCartItemQuantity(item.ID, newQty)
+		err = repository.UpdateCartItemQuantity(item.ID, newQty)
+		if err != nil {
+			return err
+		}
+
+		// remove from wishlist if product exists there
+		_ = repository.RemoveProductFromWishlist(userID, productID)
+
+		return nil
 	}
 
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
-	return repository.CreateCartItem(cart.ID, productID, 1)
+	err = repository.CreateCartItem(cart.ID, productID, 1)
+	if err != nil {
+		return err
+	}
+
+	_ = repository.RemoveProductFromWishlist(userID, productID)
+
+	return nil
 }
+
 
 func GetCart(userID uint) (*models.CartResponse, error) {
 	items, err := repository.GetCartItemsByUserID(userID)

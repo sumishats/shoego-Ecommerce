@@ -52,7 +52,7 @@ func main() {
 
 	router := gin.Default()
 
-	// serve static product images
+	
 	router.Static("/images", "./images")
 
 	routes.UserRoutes(router.Group("/"), db)

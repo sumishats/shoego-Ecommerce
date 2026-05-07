@@ -35,10 +35,18 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.DELETE("/categories/:id", handlers.DeleteCategory)
 		adminProtected.GET("/categories", handlers.GetCategories)
 	}
-
+	{
+		adminProtected.GET("/orders", handlers.GetAdminOrders)
+		adminProtected.GET("/orders/:id", handlers.GetAdminOrderDetail)
+		adminProtected.PATCH("/orders/:id/status", handlers.UpdateAdminOrderStatus)
+		//inventory 
+		adminProtected.GET("/inventory", handlers.GetAdminInventory)
+		adminProtected.PATCH("/inventory/:id/stock", handlers.UpdateAdminProductStock)
+	}
 	{
 		//admin logout
 		adminProtected.POST("/logout", handlers.AdminLogout)
+
 	}
 	return r
 }

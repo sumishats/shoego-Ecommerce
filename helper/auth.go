@@ -16,7 +16,7 @@ func GetTokenFromHeader(header string) string {
 	return header
 }
 
-func ExtractUserIDFromToken(tokenString string) (int, string, error) {
+func ExtractUserIDFromToken(tokenString string) (uint, string, error) {
 
 	cfg, _ := config.LoadConfig()
 
@@ -39,6 +39,6 @@ func ExtractUserIDFromToken(tokenString string) (int, string, error) {
 		return 0, "", fmt.Errorf("invalid token claims")
 	}
 
-	return claims.Id, claims.Email, nil
+	return uint(claims.Id), claims.Email, nil
 
 }
