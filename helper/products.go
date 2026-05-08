@@ -17,7 +17,7 @@ func SaveProductImage(fileHeader *multipart.FileHeader, uploadDir string) (strin
 	}
 	defer file.Close()
 
-	// decode the image- convert the file to image format
+	// convert the file to image format
 	img, err := imaging.Decode(file)
 	if err != nil {
 		return "", err

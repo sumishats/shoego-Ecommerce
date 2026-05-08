@@ -80,14 +80,7 @@ func DeleteCartItem(cartID, productID uint) error {
 //fetch all cart items for user with product details
 func GetCartItemsByUserID(userID uint) ([]domain.CartItem, error) {
 	var items []domain.CartItem
-	err := database.DB.
-		Model(&domain.CartItem{}).
-		Joins("JOIN carts ON carts.id = cart_items.cart_id").
-		Where("carts.user_id = ?", userID).
-		Preload("Product").
-		Preload("Product.Category").
-		Preload("Product.Images").
-		Find(&items).Error
+	err := database.DB.Model(&domain.CartItem{}).Joins("JOIN carts ON carts.id = cart_items.cart_id").Where("carts.user_id = ?", userID).Preload("Product").Preload("Product.Category").Preload("Product.Images").Find(&items).Error
 
 	return items, err
 }
@@ -95,10 +88,7 @@ func GetCartItemsByUserID(userID uint) ([]domain.CartItem, error) {
 func GetCartItemByUserIDAndProductID(userID, productID uint) (*domain.CartItem, error) {
 	var item domain.CartItem
 	err := database.DB.
-		Model(&domain.CartItem{}).
-		Joins("JOIN carts ON carts.id = cart_items.cart_id").
-		Where("carts.user_id = ? AND cart_items.product_id = ?", userID, productID).
-		First(&item).Error
+		Model(&domain.CartItem{}).Joins("JOIN carts ON carts.id = cart_items.cart_id").Where("carts.user_id = ? AND cart_items.product_id = ?", userID, productID).First(&item).Error
 
 	if err != nil {
 		return nil, err

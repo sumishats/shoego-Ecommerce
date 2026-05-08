@@ -12,10 +12,21 @@ import (
 )
 
 // admin product
-func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) error {
 
+func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) error {
 	if len(files) < 3 {
 		return errors.New("minimum 3 images required")
+	}
+
+	// check category exists
+	category, err := repository.GetCategoryByID(req.CategoryID)
+	if err != nil {
+		return errors.New("category not found")
+	}
+
+	//check category is listed
+	if !category.IsListed {
+		return errors.New("category is not listed")
 	}
 
 	product := &domain.Product{
@@ -29,7 +40,7 @@ func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) err
 		IsListed:    true,
 	}
 
-	err := repository.CreateProduct(product)
+	err = repository.CreateProduct(product)
 	if err != nil {
 		return err
 	}
@@ -317,25 +328,40 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		})
 	}
 
+	Reviews := []models.ReviewResponse{
+		{
+			UserName: "ammu",
+			Comment:  "Great product, very comfortable!",
+			Rating:   4.5,
+		},
+		{
+			UserName: "das",
+			Comment:  "Good value for money, but the color faded after a few washes.",
+			Rating:   3.0,
+		},
+	}
+
 	return &models.UserProductDetailResponse{
-		ID:           product.ID,
-		Name:         product.Name,
-		Description:  product.Description,
-		BrandID:      product.BrandID,
-		SKU:          product.SKU,
-		Price:        product.Price,
-		Stock:        product.Stock,
-		CategoryID:   product.CategoryID,
-		CategoryName: product.Category.Name,
-		IsListed:     product.IsListed,
-		Images:       images,
-		Status:       status,
-		Breadcrumbs:  []string{"Home", "Products", product.Category.Name, product.Name},
+		ID:              product.ID,
+		Name:            product.Name,
+		Description:     product.Description,
+		BrandID:         product.BrandID,
+		SKU:             product.SKU,
+		Price:           product.Price,
+		DiscountedPrice: product.Price * 0.9,
+		Rating:          4.2,
+		Stock:           product.Stock,
+		CategoryID:      product.CategoryID,
+		CategoryName:    product.Category.Name,
+		IsListed:        product.IsListed,
+		Images:          images,
+		Status:          status,
+		Breadcrumbs:     []string{"Home", "Products", product.Category.Name, product.Name},
 		Highlights: []string{
 			"Comfortable for daily wear",
-			"Durable quality",
 			"Stylish design",
 		},
+		Reviews:         Reviews,
 		RelatedProducts: relatedProducts,
 	}, nil
 }

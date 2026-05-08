@@ -20,6 +20,9 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 		return nil, err
 	}
 
+	if time.Now().After(otpData.ExpiresAt) {
+		return nil, errors.New("otp expired")
+	}
 	// Check user already exists
 	userData, err := repository.FindUserByEmail(data.Email)
 	if err != nil {
@@ -48,7 +51,10 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 	}
 
 	// Delete OTP after create user
-	_ = repository.DeleteOTP(data.Email, "signup")
+	err = repository.DeleteOTP(data.Email, "signup")
+	if err != nil {
+		return nil, err
+	}
 
 	// user response
 	userResp := models.SignupDetailResponse{
@@ -78,19 +84,15 @@ func ResendOTP(email string) error {
 		return errors.New("wait before requesting new OTP")
 	}
 
-	otp := helper.GenerateOTP()
-	expiry := time.Now().Add(2 * time.Minute)
-
 	userData, err := repository.GetSignupDataFromOTP(email) // fetches full OTP info
 	if err != nil {
 		return errors.New("cannot find signup info for this email")
 	}
 
-	// save new OTP with full info
-	userData.OTP = otp
-	userData.ExpiresAt = expiry
+	otp := helper.GenerateOTP()
+	expiry := time.Now().Add(2 * time.Minute)
 
-	err = repository.SaveOTPFull(*userData)
+	err = repository.UpdateSignupOTP(userData.ID, otp, expiry)
 	if err != nil {
 		return err
 	}

@@ -23,6 +23,13 @@ func UsersignUp(user models.SignupDetail) error {
 	if existingUser != nil {
 		return errors.New("email already exists")
 	}
+	existingOTP, err := repository.CheckExistingOTP(user.Email)
+	if err != nil {
+		return err
+	}
+	if existingOTP != nil {
+		return errors.New("OTP already sent. Please wait until it expires")
+	}
 
 	hashedPassword, err := helper.PasswordHashing(user.Password)
 	if err != nil {
