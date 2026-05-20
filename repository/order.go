@@ -12,16 +12,11 @@ func GetAdminOrders(search, status, sortBy string, limit, offset int) ([]domain.
 	var orders []domain.Order
 	var totalCount int64
 
-	query := database.DB.Model(&domain.Order{}).
-		Preload("User").
-		Preload("OrderItems")
+	query := database.DB.Model(&domain.Order{}).Preload("User").Preload("OrderItems")
 
 	if search != "" {
 		search = strings.ToLower(search)
-		query = query.
-			Joins("JOIN users ON users.id = orders.user_id").Where(
-				"LOWER(users.name) LIKE ? OR LOWER(users.email) LIKE ? OR CAST(orders.id AS TEXT) LIKE ?","%"+search+"%","%"+search+"%","%"+search+"%",
-			)
+		query = query.Joins("JOIN users ON users.id = orders.user_id").Where("LOWER(users.name) LIKE ? OR LOWER(users.email) LIKE ? OR CAST(orders.id AS TEXT) LIKE ?","%"+search+"%","%"+search+"%","%"+search+"%",)
 	}
 
 	if status != "" {
@@ -55,12 +50,7 @@ func GetAdminOrders(search, status, sortBy string, limit, offset int) ([]domain.
 func GetOrderByID(orderID uint) (*domain.Order, error) {
 	var order domain.Order
 
-	err := database.DB.
-		Preload("User").
-		Preload("Address").
-		Preload("OrderItems").
-		Preload("OrderItems.Product").
-		Preload("OrderItems.Product.Images").
+	err := database.DB.Preload("User").Preload("Address").Preload("OrderItems").Preload("OrderItems.Product").Preload("OrderItems.Product.Images").
 		First(&order, orderID).Error
 	if err != nil {
 		return nil, err
