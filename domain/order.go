@@ -2,7 +2,6 @@ package domain
 
 import "gorm.io/gorm"
 
-
 type Order struct {
 	gorm.Model
 	OrderID            string  `gorm:"uniqueIndex;not null"`
@@ -18,12 +17,10 @@ type Order struct {
 	DiscountAmount     float64
 	ShippingCharge     float64
 	FinalAmount        float64
-	CancellationReason string  `gorm:"type:text"`
-	ReturnReason       string  `gorm:"type:text"`
+	CancellationReason string      `gorm:"type:text"`
+	ReturnReason       string      `gorm:"type:text"`
 	OrderItems         []OrderItem `gorm:"foreignKey:OrderID"`
 }
-
-
 
 type OrderItem struct {
 	gorm.Model
