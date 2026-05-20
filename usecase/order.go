@@ -29,7 +29,7 @@ func GetAdminOrders(page, limit int, search, status, sortBy string) (*models.Adm
 	for _, order := range orders {
 		orderResponse = append(orderResponse, models.AdminOrderListResponse{
 			ID:            order.ID,
-			OrderID:       "ORD" + strconv.FormatUint(uint64(order.ID), 10), //uint to string 
+			OrderID:       "ORD" + strconv.FormatUint(uint64(order.ID), 10), //uint to string like orderid
 			Date:          order.CreatedAt,
 			UserName:      order.User.Name,
 			UserEmail:     order.User.Email,
@@ -38,6 +38,7 @@ func GetAdminOrders(page, limit int, search, status, sortBy string) (*models.Adm
 			FinalAmount:   order.FinalAmount,
 			OrderStatus:   order.OrderStatus,
 			PaymentMethod: order.PaymentMethod,
+			PaymentStatus: order.PaymentStatus,
 		})
 	}
 
@@ -81,6 +82,7 @@ func GetAdminOrderDetail(orderID uint) (*models.AdminOrderDetailResponse, error)
 		OrderStatus:   order.OrderStatus,
 		FinalAmount:   order.FinalAmount,
 		PaymentMethod: order.PaymentMethod,
+		PaymentStatus: order.PaymentStatus,
 		ItemCount:     len(order.OrderItems),
 		User: models.AdminOrderUserResponse{
 			ID:    order.User.ID,
@@ -266,7 +268,6 @@ func CancelOrder(userID uint, orderID, reason string) error {
 		item.ItemStatus = "cancelled"
 		item.CancellationReason = reason
 
-
 		if err := repository.UpdateOrderItem(item); err != nil {
 			return err
 		}
@@ -274,7 +275,7 @@ func CancelOrder(userID uint, orderID, reason string) error {
 		if err := repository.IncrementProductStock(item.ProductID, item.Quantity); err != nil {
 			return err
 		}
-		
+
 	}
 
 	order.OrderStatus = "cancelled"
@@ -320,7 +321,6 @@ func CancelOrderItem(userID uint, orderID string, itemID uint, reason string) er
 	if err := repository.IncrementProductStock(item.ProductID, item.Quantity); err != nil {
 		return err
 	}
-
 
 	allCancelled := true
 	for _, orderItem := range order.OrderItems {

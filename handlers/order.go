@@ -291,13 +291,6 @@ func DownloadInvoice(c *gin.Context) {
 
 	orderID := c.Param("order_id")
 
-	// order, err := repository.GetOrderByOrderID(userID, orderID)
-	// if err != nil {
-	// 	errRes := response.ClientResponse(http.StatusBadRequest, "failed to fetch order", nil, err.Error())
-	// 	c.JSON(http.StatusBadRequest, errRes)
-	// 	return
-	// }
-
 	pdfBytes, err := usecase.GenerateInvoice(userID, orderID)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusInternalServerError, "failed to generate invoice", nil, err.Error())
