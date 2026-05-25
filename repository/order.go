@@ -16,7 +16,7 @@ func GetAdminOrders(search, status, sortBy string, limit, offset int) ([]domain.
 
 	if search != "" {
 		search = strings.ToLower(search)
-		query = query.Joins("JOIN users ON users.id = orders.user_id").Where("LOWER(users.name) LIKE ? OR LOWER(users.email) LIKE ? OR CAST(orders.id AS TEXT) LIKE ?","%"+search+"%","%"+search+"%","%"+search+"%",)
+		query = query.Joins("JOIN users ON users.id = orders.user_id").Where("LOWER(users.name) LIKE ? OR LOWER(users.email) LIKE ? OR CAST(orders.id AS TEXT) LIKE ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 
 	if status != "" {
@@ -62,8 +62,26 @@ func GetOrderByID(orderID uint) (*domain.Order, error) {
 func UpdateOrderStatus(orderID uint, status string) error {
 	var order domain.Order
 
-	if err := database.DB.First(&order, orderID).Error; err != nil {
+	if err := database.DB.Preload("OrderItems").First(&order, orderID).Error; err != nil {
 		return err
+	}
+
+	if status == "returned" {
+
+		for _, item := range order.OrderItems {
+
+			var product domain.Product
+
+			if err := database.DB.First(&product, item.ProductID).Error; err != nil {
+				return err
+			}
+
+			product.Stock += item.Quantity
+
+			if err := database.DB.Save(&product).Error; err != nil {
+				return err
+			}
+		}
 	}
 
 	updates := map[string]interface{}{
@@ -78,10 +96,13 @@ func UpdateOrderStatus(orderID uint, status string) error {
 			updates["payment_status"] = "pending"
 		case "cancelled":
 			updates["payment_status"] = "cancelled"
+		case "returned":
+			updates["payment_status"] = "refunded"
 		}
 	}
 
 	return database.DB.Model(&domain.Order{}).Where("id = ?", orderID).Updates(updates).Error
+
 }
 
 // inventory admin
@@ -97,7 +118,7 @@ func GetAdminInventory(search, stockFilter, sortBy string, limit, offset int) ([
 		search = strings.ToLower(search)
 		query = query.
 			Joins("JOIN categories ON categories.id = products.category_id").
-			Where("LOWER(products.name) LIKE ? OR LOWER(products.sku) LIKE ? OR LOWER(categories.name) LIKE ?","%"+search+"%","%"+search+"%","%"+search+"%",)
+			Where("LOWER(products.name) LIKE ? OR LOWER(products.sku) LIKE ? OR LOWER(categories.name) LIKE ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 
 	switch stockFilter {

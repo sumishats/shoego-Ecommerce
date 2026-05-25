@@ -112,6 +112,7 @@ func ChangeOrderStatus(orderID uint, status string) error {
 		"out_for_delivery": true,
 		"delivered":        true,
 		"cancelled":        true,
+		"returned":         true,
 	}
 
 	if !validStatuses[status] {
