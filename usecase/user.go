@@ -205,8 +205,31 @@ func VerifyEmailChange(userID uint, req models.VerifyEmailChangeRequest) error {
 	return nil
 }
 
-func GetUserAddresses(userID uint) ([]domain.Address, error) {
-	return repository.GetUserAddresses(userID)
+func GetUserAddresses(userID uint) ([]models.AddressResponse, error) {
+
+	addresses, err := repository.GetAddressesByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseAddresses []models.AddressResponse
+
+	for _, address := range addresses {
+
+		responseAddresses = append(responseAddresses, models.AddressResponse{
+			ID:        address.ID,
+			Name:      address.Name,
+			Phone:     address.Phone,
+			HouseName: address.HouseName,
+			Street:    address.Street,
+			City:      address.City,
+			State:     address.State,
+			Pincode:   address.Pincode,
+			IsDefault: address.IsDefault,
+		})
+	}
+
+	return responseAddresses, nil
 }
 
 func AddUserAddress(userID uint, req models.AddAddressRequest) error {

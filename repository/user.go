@@ -146,17 +146,6 @@ func UpdateUserPassword(userID uint, hashedPassword string) error {
 	return database.DB.Model(&domain.User{}).Where("id = ?", userID).Update("password", hashedPassword).Error
 }
 
-func GetUserAddresses(userID uint) ([]domain.Address, error) {
-	var addresses []domain.Address
-
-	err := database.DB.
-		Where("user_id = ?", userID).
-		Order("is_default DESC, created_at DESC").
-		Find(&addresses).Error
-
-	return addresses, err
-}
-
 func AddAddress(address domain.Address) error {
 	return database.DB.Create(&address).Error
 }
