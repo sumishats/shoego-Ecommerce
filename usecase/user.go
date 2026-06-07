@@ -205,6 +205,10 @@ func VerifyEmailChange(userID uint, req models.VerifyEmailChangeRequest) error {
 	return nil
 }
 
+func GetUserAddresses(userID uint) ([]domain.Address, error) {
+	return repository.GetUserAddresses(userID)
+}
+
 func AddUserAddress(userID uint, req models.AddAddressRequest) error {
 	//check new address is default or not
 	if req.IsDefault {

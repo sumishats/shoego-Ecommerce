@@ -216,6 +216,20 @@ func VerifyEmailChange(c *gin.Context) {
 	c.JSON(http.StatusOK, successRes)
 }
 
+func GetAddresses(c *gin.Context){
+	userIDVal,_:=c.Get("user_id")
+	userID:= userIDVal.(uint)
+
+	addresses,err:=usecase.GetUserAddresses(userID)
+	if err!=nil{
+		errRes:=response.ClientResponse(http.StatusBadRequest,"failed to get addresses",nil,err.Error())
+		c.JSON(http.StatusBadRequest,errRes)
+		return
+	}
+	successRes:=response.ClientResponse(http.StatusOK,"addresses fetched successfully",addresses,nil)
+	c.JSON(http.StatusOK,successRes)
+}
+
 func AddAddress(c *gin.Context) {
 	userIDVal, _ := c.Get("user_id")
 	userID := userIDVal.(uint)

@@ -137,7 +137,6 @@ func UpdateUserProfile(userID uint, name, phone, profileImage string) error {
 	}).Error
 }
 
-// if email is valid store to db
 func UpdateUserEmail(userID uint, newEmail string) error {
 	return database.DB.Model(&domain.User{}).Where("id = ?", userID).Update("email", newEmail).Error
 }
@@ -147,7 +146,17 @@ func UpdateUserPassword(userID uint, hashedPassword string) error {
 	return database.DB.Model(&domain.User{}).Where("id = ?", userID).Update("password", hashedPassword).Error
 }
 
-// insert new Address  in db
+func GetUserAddresses(userID uint) ([]domain.Address, error) {
+	var addresses []domain.Address
+
+	err := database.DB.
+		Where("user_id = ?", userID).
+		Order("is_default DESC, created_at DESC").
+		Find(&addresses).Error
+
+	return addresses, err
+}
+
 func AddAddress(address domain.Address) error {
 	return database.DB.Create(&address).Error
 }

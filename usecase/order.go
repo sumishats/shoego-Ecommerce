@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func GetAdminOrders(page, limit int, search, status, sortBy string) (*models.AdminOrderPaginationResponse, error) {
+func GetAdminOrders(page, limit int, search, status, sortBy, date string) (*models.AdminOrderPaginationResponse, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -19,7 +19,7 @@ func GetAdminOrders(page, limit int, search, status, sortBy string) (*models.Adm
 	}
 	offset := (page - 1) * limit
 
-	orders, totalCount, err := repository.GetAdminOrders(search, status, sortBy, limit, offset)
+	orders, totalCount, err := repository.GetAdminOrders(search, status, sortBy, date, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +112,7 @@ func ChangeOrderStatus(orderID uint, status string) error {
 		"out_for_delivery": true,
 		"delivered":        true,
 		"cancelled":        true,
+		"returned":         true,
 	}
 
 	if !validStatuses[status] {
