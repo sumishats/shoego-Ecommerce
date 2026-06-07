@@ -9,12 +9,10 @@ import (
 
 //admin product
 
-// insert new product into product table
 func CreateProduct(product *domain.Product) error {
 	return database.DB.Create(product).Error
 }
 
-// insert new images into productimages table
 func CreateProductImages(images []domain.ProductImage) error {
 	return database.DB.Create(&images).Error
 }
@@ -28,7 +26,6 @@ func GetProductByID(productID uint) (*domain.Product, error) {
 	return &product, nil
 }
 
-
 func GetProducts(limit int, offset int) ([]domain.Product, error) {
 	var products []domain.Product
 
@@ -41,7 +38,6 @@ func GetProducts(limit int, offset int) ([]domain.Product, error) {
 	return products, nil
 }
 
-// get total num of products in product table
 func CountProducts() (int64, error) {
 	var count int64
 	err := database.DB.Model(&domain.Product{}).Count(&count).Error
@@ -60,7 +56,6 @@ func UpdateProduct(productID uint, data map[string]interface{}) error {
 func DeleteProductImages(productID uint) error {
 	return database.DB.Where("product_id = ?", productID).Delete(&domain.ProductImage{}).Error
 }
-
 
 func SoftDeleteProduct(productID uint) error {
 	return database.DB.Delete(&domain.Product{}, productID).Error
@@ -150,8 +145,10 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 		db = db.Where("price <= ?", query.MaxPrice)
 	}
 
-	//sort product
+	
 	switch query.Sort {
+	case "asc":
+		db = db.Order("products.id ASC")
 	case "price_asc":
 		db = db.Order("products.price ASC")
 	case "price_desc":
@@ -196,7 +193,6 @@ func GetUserProductDetails(productID uint) (*domain.Product, error) {
 }
 
 func GetRelatedUserProducts(categoryID uint, productID uint, limit int) ([]domain.Product, error) {
-	//fetching related product same category
 	var products []domain.Product
 
 	err := database.DB.Model(&domain.Product{}).Preload("Images").Joins("JOIN categories ON categories.id = products.category_id").
@@ -216,7 +212,7 @@ func GetRelatedUserProducts(categoryID uint, productID uint, limit int) ([]domai
 
 func GetUserCategories(search string) ([]domain.Category, error) {
 	var categories []domain.Category
-	
+
 	db := database.DB.Model(&domain.Category{}).Where("is_listed = ?", true)
 
 	if strings.TrimSpace(search) != "" {

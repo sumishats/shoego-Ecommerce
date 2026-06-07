@@ -78,7 +78,8 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		userProtected.POST("/profile/verify-email-change", handlers.VerifyEmailChange)
 
 		//address
-		userProtected.GET("/address", handlers.GetAllAddresses)
+
+		userProtected.GET("/address", handlers.GetAddresses)
 		userProtected.POST("/address", handlers.AddAddress)
 		userProtected.PUT("/address/:id", handlers.EditAddress)
 		userProtected.DELETE("/address/:id", handlers.DeleteAddress)

@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAdminOrders(search, status, sortBy string, limit, offset int) ([]domain.Order, int64, error) {
+func GetAdminOrders(search, status, sortBy, date string, limit, offset int) ([]domain.Order, int64, error) {
 	var orders []domain.Order
 	var totalCount int64
 
@@ -20,7 +20,12 @@ func GetAdminOrders(search, status, sortBy string, limit, offset int) ([]domain.
 	}
 
 	if status != "" {
+		status = strings.ToLower(status)
 		query = query.Where("orders.order_status = ?", status)
+	}
+
+	if date != "" {
+		query = query.Where("DATE(orders.created_at)=?", date)
 	}
 
 	err := query.Count(&totalCount).Error
@@ -29,7 +34,7 @@ func GetAdminOrders(search, status, sortBy string, limit, offset int) ([]domain.
 	}
 
 	switch sortBy {
-	case "oldest":
+	case "asc":
 		query = query.Order("orders.created_at ASC")
 	case "status_asc":
 		query = query.Order("orders.order_status ASC")
@@ -111,8 +116,7 @@ func GetAdminInventory(search, stockFilter, sortBy string, limit, offset int) ([
 	var products []domain.Product
 	var totalCount int64
 
-	query := database.DB.Model(&domain.Product{}).
-		Preload("Category")
+	query := database.DB.Model(&domain.Product{}).Preload("Category")
 
 	if search != "" {
 		search = strings.ToLower(search)

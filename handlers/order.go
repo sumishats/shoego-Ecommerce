@@ -14,11 +14,12 @@ func GetAdminOrders(c *gin.Context) {
 	search := c.Query("search")
 	status := c.Query("status")
 	sortBy := c.Query("sort_by")
+	date   := c.Query("date")
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-	data, err := usecase.GetAdminOrders(page, limit, search, status, sortBy)
+	data, err := usecase.GetAdminOrders(page, limit, search, status, sortBy,date)
 
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusInternalServerError, "failed to get orders", nil, err.Error())
@@ -134,8 +135,8 @@ func GetUserOrders(c *gin.Context) {
 		page = 1
 	}
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if err != nil || page <= 0 {
-		page = 1
+	if err != nil || limit <= 0 {
+		limit=10
 	}
 	search := c.Query("search")
 
