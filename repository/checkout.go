@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"shoego/database"
 	"shoego/domain"
 
@@ -32,8 +33,10 @@ func GetAddressByIDAndUserID(addressID, userID uint) (domain.Address, error) {
 	return address, err
 }
 
-func CreateOrderWithItems(order *domain.Order, orderItems []domain.OrderItem) error {
+func CreateOrderTransaction(order *domain.Order,orderItems []domain.OrderItem,userID uint,) error {
+
 	return database.DB.Transaction(func(tx *gorm.DB) error {
+
 		if err := tx.Create(order).Error; err != nil {
 			return err
 		}
@@ -46,16 +49,23 @@ func CreateOrderWithItems(order *domain.Order, orderItems []domain.OrderItem) er
 			return err
 		}
 
+		for _, item := range orderItems {
+
+			result := tx.Model(&domain.Product{}).Where("id = ? AND stock >= ?", item.ProductID, item.Quantity).Update("stock", gorm.Expr("stock - ?", item.Quantity))
+
+			if result.Error != nil {
+				return result.Error
+			}
+
+			if result.RowsAffected == 0 {
+				return errors.New("insufficient stock")
+			}
+		}
+
+		if err := tx.Where("cart_id IN (?)",tx.Model(&domain.Cart{}).Select("id").Where("user_id = ?", userID),).Delete(&domain.CartItem{}).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
-
-func ReduceProductStock(productID uint, quantity int) error {
-	return database.DB.Model(&domain.Product{}).Where("id = ? AND stock >= ?", productID, quantity).Update("stock", gorm.Expr("stock - ?", quantity)).Error
-}
-
-func ClearCartAfterOrder(userID uint) error {
-	return database.DB.Where("cart_id IN (?)",database.DB.Model(&domain.Cart{}).Select("id").Where("user_id = ?", userID),).Delete(&domain.CartItem{}).Error
-}
-
-
