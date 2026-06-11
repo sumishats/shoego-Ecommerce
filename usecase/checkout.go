@@ -137,24 +137,14 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 		product := item.Product
 
 		orderItems = append(orderItems, domain.OrderItem{
-			ProductID: product.ID,
-			Quantity:  item.Quantity,
-			Price:     product.Price,
+			ProductID:  product.ID,
+			Quantity:   item.Quantity,
+			Price:      product.Price,
 			TotalPrice: product.Price * float64(item.Quantity),
 		})
 	}
 
-	if err := repository.CreateOrderWithItems(order, orderItems); err != nil {
-		return nil, err
-	}
-
-	for _, item := range cartItems {
-		if err := repository.ReduceProductStock(item.ProductID, item.Quantity); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := repository.ClearCartAfterOrder(userID); err != nil {
+	if err := repository.CreateOrderTransaction(order,orderItems,userID,);err != nil {
 		return nil, err
 	}
 
