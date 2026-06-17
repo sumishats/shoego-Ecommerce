@@ -177,10 +177,39 @@ func GetUserOrders(userID uint, search string, limit, offset int) ([]domain.Orde
 	return orders, err
 }
 
+// func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
+// 	var order domain.Order
+// 	err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where(" user_id AND order_id = ?", order.UserID, orderID).First(&order).Error
+// 	return order, err
+// }
 func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
 	var order domain.Order
-	err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where("user_id = ? AND order_id = ?", userID, orderID).First(&order).Error
+
+	err := database.DB.
+		Preload("OrderItems.Product.Images").
+		Preload("Address").
+		Where("user_id = ? AND order_id = ?", userID, orderID).
+		First(&order).Error
+
 	return order, err
+}
+// func GetOrderByOrderIDPayment(orderID string) (*domain.Order, error) {
+
+// 	var order domain.Order
+
+// 	err := database.DB.Where("order_id = ?", orderID).First(&order).Error
+	
+
+// 	return &order, err
+// }
+func GetOrderByOrderIDPayment(orderID string) (*domain.Order, error) {
+	var order domain.Order
+
+	err := database.DB.
+		Where("order_id = ?", orderID).
+		First(&order).Error
+
+	return &order, err
 }
 
 func UpdateOrder(order *domain.Order) error {

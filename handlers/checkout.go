@@ -50,15 +50,15 @@ func PlaceCODOrder(c *gin.Context) {
 }
 
 func GetOrderSuccess(c *gin.Context) {
-	userID, ok := getUserIDFromContext(c)
-	if !ok {
-		return
-	}
+	// userID, ok := getUserIDFromContext(c)
+	// if !ok {
+	// 	return
+	// }
 
 	orderID := c.Param("order_id")
 
-	success, err := usecase.GetOrderSuccess(userID, orderID)
-	if err != nil { 
+	success, err := usecase.GetOrderSuccess(orderID)
+	if err != nil {
 		errRes := response.ClientResponse(http.StatusNotFound, "order not found", nil, err.Error())
 		c.JSON(http.StatusNotFound, errRes)
 		return
@@ -67,3 +67,4 @@ func GetOrderSuccess(c *gin.Context) {
 	successRes := response.ClientResponse(http.StatusOK, "order success page loaded", success, nil)
 	c.JSON(http.StatusOK, successRes)
 }
+

@@ -44,6 +44,7 @@ func main() {
 		cfg.GOOGLE_CLIENT_SECRET,
 		cfg.GOOGLE_REDIRECT_URL,
 	)
+	config.InitRazorpay(cfg.RAZORPAY_KEY_ID, cfg.RAZORPAY_KEY_SECRET)
 
 	db, err := database.ConnectDatabase(cfg)
 	if err != nil {
@@ -52,8 +53,10 @@ func main() {
 
 	router := gin.Default()
 
-	
 	router.Static("/images", "./images")
+
+	// ADDED
+	router.Static("/static", "./template")
 
 	routes.UserRoutes(router.Group("/"), db)
 	routes.AdminRoutes(router.Group("/admin"), db)

@@ -27,7 +27,7 @@ func CreateCart(userID uint) (*domain.Cart, error) {
 	return &cart, nil
 }
 
-//create cart if not exist for user
+// create cart if not exist for user
 func GetOrCreateCart(userID uint) (*domain.Cart, error) {
 	cart, err := GetCartByUserID(userID)
 	if err == nil {
@@ -41,7 +41,7 @@ func GetOrCreateCart(userID uint) (*domain.Cart, error) {
 	return nil, err
 }
 
-//fetch  product form db by id
+// fetch  product form db by id
 func GetProductForCart(productID uint) (*domain.Product, error) {
 	var product domain.Product
 	err := database.DB.Preload("Category").Preload("Images").First(&product, productID).Error
@@ -77,7 +77,7 @@ func DeleteCartItem(cartID, productID uint) error {
 	return database.DB.Where("cart_id = ? AND product_id = ?", cartID, productID).Delete(&domain.CartItem{}).Error
 }
 
-//fetch all cart items for user with product details
+// fetch all cart items for user with product details
 func GetCartItemsByUserID(userID uint) ([]domain.CartItem, error) {
 	var items []domain.CartItem
 	err := database.DB.Model(&domain.CartItem{}).Joins("JOIN carts ON carts.id = cart_items.cart_id").Where("carts.user_id = ?", userID).Preload("Product").Preload("Product.Category").Preload("Product.Images").Find(&items).Error
@@ -94,4 +94,36 @@ func GetCartItemByUserIDAndProductID(userID, productID uint) (*domain.CartItem, 
 		return nil, err
 	}
 	return &item, nil
+}
+
+func ClearCartByUserID(userID uint) error {
+
+	tx := database.DB.Begin()
+
+	var cart domain.Cart
+
+	if err := tx.
+		Where("user_id = ?", userID).
+		First(&cart).Error; err != nil {
+
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.
+		Where("cart_id = ?", cart.ID).
+		Delete(&domain.CartItem{}).Error; err != nil {
+
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.
+		Delete(&cart).Error; err != nil {
+
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

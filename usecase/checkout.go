@@ -148,6 +148,16 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 		return nil, err
 	}
 
+	// for _, item := range cartItems {
+	// 	if err := repository.CreateOrderTransaction(item.ProductID, item.Quantity); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	// if err := repository.CreateOrderTransaction(userID); err != nil {
+	// 	return nil, err
+	// }
+
 	return &models.PlaceOrderResponse{
 		OrderID:     orderID,
 		Message:     "order placed successfully",
@@ -155,8 +165,8 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 	}, nil
 }
 
-func GetOrderSuccess(userID uint, orderID string) (*models.OrderSuccessResponse, error) {
-	_, err := repository.GetOrderByOrderID(userID, orderID)
+func GetOrderSuccess( orderID string) (*models.OrderSuccessResponse, error) {
+	_, err := repository.GetOrderByOrderIDPayment(orderID)
 	if err != nil {
 		return nil, errors.New("order not found")
 	}
