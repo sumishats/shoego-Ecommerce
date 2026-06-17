@@ -2,12 +2,13 @@ package config
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/razorpay/razorpay-go"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
-//dtabse details and other details are stored in this struct and loaded from .env file
+// dtabse details and other details are stored in this struct and loaded from .env file
 type Config struct {
 	BASE_URL   string `mapstructure:"BASE_URL"`
 	DBHost     string `mapstructure:"DB_HOST"`
@@ -27,10 +28,14 @@ type Config struct {
 	GOOGLE_CLIENT_ID     string `mapstructure:"GOOGLE_CLIENT_ID"`
 	GOOGLE_CLIENT_SECRET string `mapstructure:"GOOGLE_CLIENT_SECRET"`
 	GOOGLE_REDIRECT_URL  string `mapstructure:"GOOGLE_REDIRECT_URL"`
+
+	RAZORPAY_KEY_ID     string `mapstructure:"RAZORPAY_KEY_ID"`
+	RAZORPAY_KEY_SECRET string `mapstructure:"RAZORPAY_KEY_SECRET"`
 }
 
+var AppConfig Config
 var envs = []string{
-	"BASE_URL", "DB_HOST", "DB_NAME", "DB_USER", "DB_PORT", "DB_PASSWORD", "EMAIL", "EMAIL_PASSWORD", "SMTP_HOST", "SMTP_PORT","GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","GOOGLE_REDIRECT_URL",}
+	"BASE_URL", "DB_HOST", "DB_NAME", "DB_USER", "DB_PORT", "DB_PASSWORD", "EMAIL", "EMAIL_PASSWORD", "SMTP_HOST", "SMTP_PORT", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URL", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"}
 
 func LoadConfig() (Config, error) {
 	var config Config
@@ -57,11 +62,10 @@ func LoadConfig() (Config, error) {
 	if err := validator.New().Struct(&config); err != nil {
 		return config, err
 	}
-
+	AppConfig = config
 	return config, nil
 
 }
-
 
 var GoogleOAuthConfig *oauth2.Config
 
@@ -76,4 +80,10 @@ func InitGoogleOAuth(clientID, clientSecret, redirectURL string) {
 		},
 		Endpoint: google.Endpoint,
 	}
+}
+
+var RazorpayClient *razorpay.Client
+
+func InitRazorpay(keyID, secret string) {
+	RazorpayClient = razorpay.NewClient(keyID, secret)
 }

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Razorpay Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h2>Razorpay Payment Test</h2>
+
+<button onclick="payNow()">
+    Pay Now
+</button>
+
+<script>
+
+
+async function payNow() {
+
+    // ★ CHANGE
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("Please login first");
+        return;
+    }
+
+    // ★ CHANGE
+    const createOrderResponse = await fetch(
+        "http://localhost:8080/checkout/razorpay",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                address_id: 1
+            })
+        }
+    );
+
+    const orderData = await createOrderResponse.json();
+
+    console.log("Status:", createOrderResponse.status);
+console.log("Response:", orderData);
+
+if (!createOrderResponse.ok) {
+    alert(JSON.stringify(orderData));
+    return;
+}
+
+    console.log(orderData);
+
+    const data = orderData.data;
+
+    const options = {
+
+        key: data.key,
+
+        amount: data.final_amount * 100,
+
+        currency: data.currency,
+
+        order_id: data.razorpay_order_id,
+
+        name: "Shoego",
+
+        description: "Order Payment",
+
+        handler: async function(response) {
+
+            console.log(response);
+
+            const verifyResponse = await fetch(
+    "http://localhost:8080/checkout/razorpay/verify",
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+    razorpay_order_id: response.razorpay_order_id,
+    razorpay_payment_id: response.razorpay_payment_id,
+    razorpay_signature: response.razorpay_signature
+})
+                    
+                }
+            );
+
+            const verifyData =
+                await verifyResponse.json();
+
+            console.log(verifyData);
+
+            if (verifyResponse.ok) {
+
+                alert("Payment Success");
+
+                window.location.href =
+                    "/order-success/" + data.order_id;
+
+            } else {
+
+                alert("Payment Verification Failed");
+            }
+        }
+    };
+
+    const razorpay = new Razorpay(options);
+
+    razorpay.open();
+}
+
+</script>
+
+</body>
+</html>
+
+
+

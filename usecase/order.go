@@ -364,6 +364,14 @@ func ReturnOrder(userID uint, orderID, reason string) error {
 			continue
 		}
 
+		err := repository.IncrementProductStock(
+			item.ProductID,
+			item.Quantity,
+		)
+		if err != nil {
+			return err
+		}
+
 		item.ItemStatus = "returned"
 		item.ReturnReason = reason
 
@@ -403,6 +411,13 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 
 	if item.ItemStatus == "cancelled" {
 		return errors.New("cancelled item cannot be returned")
+	}
+	err = repository.IncrementProductStock(
+		item.ProductID,
+		item.Quantity,
+	)
+	if err != nil {
+		return err
 	}
 
 	item.ItemStatus = "returned"
