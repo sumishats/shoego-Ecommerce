@@ -234,7 +234,7 @@ func GetUserOrderDetail(userID uint, orderID string) (*models.OrderDetailRespons
 		PaymentStatus:  order.PaymentStatus,
 		Subtotal:       order.Subtotal,
 		TaxAmount:      order.TaxAmount,
-		DiscountAmount: order.DiscountAmount,
+		CouponDiscount: order.CouponDiscount,
 		ShippingCharge: order.ShippingCharge,
 		FinalAmount:    order.FinalAmount,
 		Items:          items,

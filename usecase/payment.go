@@ -17,21 +17,25 @@ import (
 
 func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*models.CreateRazorpayOrderResponse, error) {
 
+	
 	_, err := repository.GetAddressByIDAndUserID(req.AddressID, userID)
 	if err != nil {
+		
 		return nil, err
 	}
-
+	
 	checkout, err := GetCheckoutPage(userID)
 	if err != nil {
+		
 		return nil, err
 	}
-
+	
 	cartItems, err := repository.GetCartItemsForCheckout(userID)
 	if err != nil {
+		
 		return nil, err
 	}
-
+	
 	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
 
 	order := &domain.Order{
@@ -43,7 +47,7 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		PaymentStatus:  "pending",
 		Subtotal:       checkout.Subtotal,
 		TaxAmount:      checkout.TaxAmount,
-		DiscountAmount: checkout.DiscountAmount,
+		CouponDiscount: checkout.CouponDiscount,
 		ShippingCharge: checkout.ShippingCharge,
 		FinalAmount:    checkout.FinalAmount,
 	}
@@ -67,7 +71,7 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		PaymentMethod: "razorpay",
 		Status:        "pending",
 	}
-
+	
 	err = repository.CreatePendingOrderTransaction(order, orderItems, payment)
 	if err != nil {
 		return nil, err
@@ -80,7 +84,7 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		"currency": "INR",
 		"receipt":  order.OrderID,
 	}
-
+	
 	body, err := config.RazorpayClient.Order.Create(data, nil)
 	if err != nil {
 		return nil, err

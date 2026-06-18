@@ -26,7 +26,6 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 
 	r.GET("/order-success/:order_id", handlers.GetOrderSuccess)
 
-
 	userProtected := r.Group("/")
 	userProtected.Use(middleware.AuthMiddleware())
 	{
@@ -56,14 +55,18 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 
 	}
 	{
+		//coupon management
+		userProtected.POST("/coupons/apply", handlers.ApplyCoupon)
+		userProtected.DELETE("/coupons/remove", handlers.RemoveCoupon)
+		// userProtected.GET("/checkout", handlers.GetCheckoutPage)
+	}
+	{
 		//checkout management
 		userProtected.GET("/checkout", handlers.GetCheckoutPage)
 		userProtected.POST("/checkout/place-order", handlers.PlaceCODOrder)
 
 		userProtected.POST("/checkout/razorpay", handlers.CreateRazorpayOrder)
-		userProtected.POST("/checkout/razorpay/verify",handlers.VerifyPayment)
-
-		// userProtected.GET("/order-success/:order_id", handlers.GetOrderSuccess)
+		userProtected.POST("/checkout/razorpay/verify", handlers.VerifyPayment)
 
 	}
 	{

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"shoego/models"
 	"shoego/response"
@@ -27,6 +28,7 @@ func CreateRazorpayOrder(c *gin.Context) {
 	result, err := usecase.CreateRazorpayOrder(userID, req)
 
 	if err != nil {
+		fmt.Println("RAZORPAY ERROR:", err)
 		errRes := response.ClientResponse(http.StatusBadRequest, "failed to create razorpay order", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)
 		return

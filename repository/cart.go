@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"shoego/database"
 	"shoego/domain"
 
@@ -126,4 +127,38 @@ func ClearCartByUserID(userID uint) error {
 	}
 
 	return tx.Commit().Error
+}
+
+func GetCartSubtotal(userID uint) (float64, error) {
+
+	var subtotal float64
+
+	err := database.DB.
+		Table("cart_items").
+		Select("COALESCE(SUM(products.price * cart_items.quantity),0)").
+		Joins("JOIN carts ON carts.id = cart_items.cart_id").
+		Joins("JOIN products ON products.id = cart_items.product_id").
+		Where("carts.user_id = ? AND cart_items.deleted_at IS NULL", userID).
+		Scan(&subtotal).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return subtotal, nil
+}
+// func GetCartByUserID(userID uint) (*domain.Cart, error) {
+
+// 	var cart domain.Cart
+
+// 	err := database.DB.Where("user_id = ?", userID).First(&cart).Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+//		return &cart, nil
+//	}
+func UpdateCart(cart *domain.Cart) error {
+	fmt.Println("upadte db")
+	return database.DB.Save(cart).Error
 }

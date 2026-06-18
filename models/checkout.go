@@ -24,13 +24,14 @@ type CheckoutAddressResponse struct {
 }
 
 type CheckoutPageResponse struct {
-	Addresses      []CheckoutAddressResponse `json:"addresses"`
-	Items          []CheckoutItemResponse    `json:"items"`
-	Subtotal       float64                   `json:"subtotal"`
-	TaxAmount      float64                   `json:"tax_amount"`
-	DiscountAmount float64                   `json:"discount_amount"`
-	ShippingCharge float64                   `json:"shipping_charge"`
-	FinalAmount    float64                   `json:"final_amount"`
+	Addresses       []CheckoutAddressResponse `json:"addresses"`
+	Items           []CheckoutItemResponse    `json:"items"`
+	Subtotal        float64                   `json:"subtotal"`
+	TaxAmount       float64                   `json:"tax_amount"`
+	CouponCode      string                    `json:"coupon_code"`
+	CouponDiscount  float64                   `json:"coupon_discount"`
+	ShippingCharge  float64                   `json:"shipping_charge"`
+	FinalAmount     float64                   `json:"final_amount"`
 }
 
 type PlaceOrderRequest struct {

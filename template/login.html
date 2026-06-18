@@ -35,9 +35,12 @@ async function login() {
 
     const data = await response.json();
 
-console.log(data);
+console.log("FULL LOGIN RESPONSE:");
+console.log(JSON.stringify(data, null, 2));
 
 if(response.ok){
+
+    console.log("ACCESS TOKEN =", data.data?.access_token);
 
     localStorage.setItem(
         "token",
@@ -46,8 +49,7 @@ if(response.ok){
 
     alert("Login Success");
 
-    window.location.href =
-        "/static/index.html";
+    window.location.href = "/static/index.html";
 }
 }
 
