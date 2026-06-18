@@ -14,7 +14,7 @@ type Order struct {
 	PaymentStatus      string  `gorm:"type:varchar(50);default:'pending'"`
 	Subtotal           float64
 	TaxAmount          float64
-	DiscountAmount     float64
+	CouponDiscount     float64
 	ShippingCharge     float64
 	FinalAmount        float64
 	CancellationReason string      `gorm:"type:text"`

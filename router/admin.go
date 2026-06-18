@@ -44,6 +44,12 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.PATCH("/inventory/:id/stock", handlers.UpdateAdminProductStock)
 	}
 	{
+		//coupon managemnt
+		adminProtected.POST("/coupons",handlers.CreateCoupon)
+		adminProtected.GET("/coupons",handlers.GetAllCoupons)
+		adminProtected.DELETE("/coupons/:id", handlers.DeleteCoupon)
+	}
+	{
 		//admin logout
 		adminProtected.POST("/logout", handlers.AdminLogout)
 

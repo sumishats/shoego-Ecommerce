@@ -54,7 +54,7 @@ func GenerateInvoicePDF(order domain.Order) ([]byte, error) {
 	pdf.Ln(8)
 	pdf.Cell(60, 10, fmt.Sprintf("Tax: %.2f", order.TaxAmount))
 	pdf.Ln(8)
-	pdf.Cell(60, 10, fmt.Sprintf("Discount: %.2f", order.DiscountAmount))
+	pdf.Cell(60, 10, fmt.Sprintf("Discount: %.2f", order.CouponDiscount))
 	pdf.Ln(8)
 	pdf.Cell(60, 10, fmt.Sprintf("Shipping: %.2f", order.ShippingCharge))
 	pdf.Ln(8)

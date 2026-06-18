@@ -142,7 +142,7 @@ type OrderDetailResponse struct {
 	PaymentStatus  string              `json:"payment_status"`
 	Subtotal       float64             `json:"subtotal"`
 	TaxAmount      float64             `json:"tax_amount"`
-	DiscountAmount float64             `json:"discount_amount"`
+	CouponDiscount float64             `json:"discount_amount"`
 	ShippingCharge float64             `json:"shipping_charge"`
 	FinalAmount    float64             `json:"final_amount"`
 	Items          []OrderItemResponse `json:"items"`
