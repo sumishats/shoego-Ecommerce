@@ -73,6 +73,7 @@ func UpdateOrderStatus(orderID uint, status string) error {
 
 	if status == "returned" {
 
+		// Stock return
 		for _, item := range order.OrderItems {
 
 			var product domain.Product
@@ -87,6 +88,17 @@ func UpdateOrderStatus(orderID uint, status string) error {
 				return err
 			}
 		}
+
+	
+		// NEW CODE START
+		err := database.DB.Model(&domain.OrderItem{}).
+			Where("order_id = ? AND item_status = ?", order.ID, "return_requested").
+			Update("item_status", "returned").Error
+
+		if err != nil {
+			return err
+		}
+	
 	}
 
 	updates := map[string]interface{}{
@@ -97,19 +109,22 @@ func UpdateOrderStatus(orderID uint, status string) error {
 		switch status {
 		case "delivered":
 			updates["payment_status"] = "paid"
+
 		case "pending", "shipped", "out_for_delivery":
 			updates["payment_status"] = "pending"
+
 		case "cancelled":
 			updates["payment_status"] = "cancelled"
+
 		case "returned":
 			updates["payment_status"] = "refunded"
 		}
 	}
 
-	return database.DB.Model(&domain.Order{}).Where("id = ?", orderID).Updates(updates).Error
-
+	return database.DB.Model(&domain.Order{}).
+		Where("id = ?", orderID).
+		Updates(updates).Error
 }
-
 // inventory admin
 
 func GetAdminInventory(search, stockFilter, sortBy string, limit, offset int) ([]domain.Product, int64, error) {
