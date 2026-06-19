@@ -113,12 +113,32 @@ func ChangeOrderStatus(orderID uint, status string) error {
 		"delivered":        true,
 		"cancelled":        true,
 		"returned":         true,
+		"return_requested": true,
 	}
 
 	if !validStatuses[status] {
 		return errors.New("invalid order status")
 	}
+	if status == "returned" {
 
+		order, err := repository.GetOrderByID(orderID)
+		if err != nil {
+			return err
+		}
+	
+		if order.OrderStatus != "returned" {
+	
+			err = CreditWallet(
+				order.UserID,
+				order.FinalAmount,
+				"Return refund",
+			)
+	
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return repository.UpdateOrderStatus(orderID, status)
 }
 
@@ -279,6 +299,21 @@ func CancelOrder(userID uint, orderID, reason string) error {
 
 	}
 
+	payment, err := repository.GetPaymentByOrderID(order.ID)
+
+	if err == nil && payment.Status == "paid" {
+
+		err = CreditWallet(
+			order.UserID,
+			order.FinalAmount,
+			"Order cancellation refund",
+		)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	order.OrderStatus = "cancelled"
 	order.CancellationReason = reason
 
@@ -364,23 +399,25 @@ func ReturnOrder(userID uint, orderID, reason string) error {
 			continue
 		}
 
-		err := repository.IncrementProductStock(
-			item.ProductID,
-			item.Quantity,
-		)
-		if err != nil {
-			return err
-		}
-
-		item.ItemStatus = "returned"
+		item.ItemStatus = "return_requested"
 		item.ReturnReason = reason
+		// err := repository.IncrementProductStock(
+		// 	item.ProductID,
+		// 	item.Quantity,
+		// )
+		// if err != nil {
+		// 	return err
+		// }
+
+		// item.ItemStatus = "returned"
+		// item.ReturnReason = reason
 
 		if err := repository.UpdateOrderItem(item); err != nil {
 			return err
 		}
 	}
 
-	order.OrderStatus = "returned"
+	order.OrderStatus = "return_requested"
 	order.ReturnReason = reason
 
 	return repository.UpdateOrder(&order)
@@ -412,16 +449,20 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 	if item.ItemStatus == "cancelled" {
 		return errors.New("cancelled item cannot be returned")
 	}
-	err = repository.IncrementProductStock(
-		item.ProductID,
-		item.Quantity,
-	)
-	if err != nil {
-		return err
-	}
 
-	item.ItemStatus = "returned"
+	item.ItemStatus = "return_requested"
 	item.ReturnReason = reason
+
+	// err = repository.IncrementProductStock(
+	// 	item.ProductID,
+	// 	item.Quantity,
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+
+	// item.ItemStatus = "returned"
+	// item.ReturnReason = reason
 
 	if err := repository.UpdateOrderItem(&item); err != nil {
 		return err
@@ -441,7 +482,7 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 	}
 
 	if allReturned {
-		order.OrderStatus = "returned"
+		order.OrderStatus = "return_requested"
 		order.ReturnReason = reason
 	} else {
 		order.OrderStatus = "partially_returned"

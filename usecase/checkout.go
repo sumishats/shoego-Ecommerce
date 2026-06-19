@@ -110,7 +110,6 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 		couponDiscount = cart.DiscountAmount
 	}
 
-	
 	finalAmount := math.Round((subtotal+tax+shipping-couponDiscount)*100) / 100
 
 	return &models.CheckoutPageResponse{
@@ -277,6 +276,81 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 	return &models.PlaceOrderResponse{
 		OrderID:     orderID,
 		Message:     "order placed successfully",
+		FinalAmount: checkout.FinalAmount,
+	}, nil
+}
+func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
+	if req.PaymentMethod != "wallet" {
+		return nil, errors.New("invalid payment method")
+	}
+	_, err := repository.GetAddressByIDAndUserID(req.AddressID, userID)
+	if err != nil {
+		return nil, errors.New("address not found")
+	}
+	checkout, err := GetCheckoutPage(userID)
+	if err != nil {
+		return nil, err
+	}
+	wallet, err := repository.GetWalletByUserID(userID)
+	if err != nil {
+		return nil, errors.New("wallet not found")
+	}
+	if wallet.Balance < checkout.FinalAmount {
+		return nil, errors.New("insufficient wallet balance")
+	}
+	cartItems, err := repository.GetCartItemsForCheckout(userID)
+	if err != nil {
+		return nil, err
+	}
+	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
+	order := &domain.Order{
+		OrderID:       orderID,
+		UserID:        userID,
+		AddressID:     req.AddressID,
+		OrderStatus:   "placed",
+		PaymentMethod: "wallet",
+
+		PaymentStatus:  "paid",
+		Subtotal:       checkout.Subtotal,
+		TaxAmount:      checkout.TaxAmount,
+		CouponDiscount: checkout.CouponDiscount,
+		ShippingCharge: checkout.ShippingCharge,
+		FinalAmount:    checkout.FinalAmount,
+	}
+	var orderItems []domain.OrderItem
+
+	for _, item := range cartItems {
+		product := item.Product
+		orderItems = append(orderItems, domain.OrderItem{
+			ProductID:  product.ID,
+			Quantity:   item.Quantity,
+			Price:      product.Price,
+			TotalPrice: product.Price * float64(item.Quantity),
+		})
+	}
+	err = repository.CreateOrderTransaction(order, orderItems, userID)
+	if err != nil {
+		return nil, err
+	}
+	newBalance := wallet.Balance - checkout.FinalAmount
+	
+	err = repository.UpdateWalletBalance(wallet.ID, newBalance)
+	if err != nil {
+		return nil, err
+	}
+	transaction := &domain.WalletTransaction{
+		WalletID:    wallet.ID,
+		Amount:      checkout.FinalAmount,
+		Type:        "debit",
+		Description: "order payment",
+	}
+	err = repository.CreateWalletTransaction(transaction)
+	if err != nil {
+		return nil, err
+	}
+	return &models.PlaceOrderResponse{
+		OrderID:     orderID,
+		Message:     "wallet payment successful",
 		FinalAmount: checkout.FinalAmount,
 	}, nil
 }

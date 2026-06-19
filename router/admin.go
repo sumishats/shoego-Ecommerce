@@ -36,6 +36,7 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.GET("/categories", handlers.GetCategories)
 	}
 	{
+		//order
 		adminProtected.GET("/orders", handlers.GetAdminOrders)
 		adminProtected.GET("/orders/:id", handlers.GetAdminOrderDetail)
 		adminProtected.PATCH("/orders/:id/status", handlers.UpdateAdminOrderStatus)

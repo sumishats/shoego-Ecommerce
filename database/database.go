@@ -41,6 +41,8 @@ func ConnectDatabase(cfg config.Config) (*gorm.DB, error) {
 	DB.AutoMigrate(&domain.Wishlist{})
 	DB.AutoMigrate(&domain.Payment{})
 	DB.AutoMigrate(&domain.Coupon{})
+	DB.AutoMigrate(&domain.Wallet{})
+	DB.AutoMigrate(&domain.WalletTransaction{})
 
 	log.Println("database connected successfully")
 

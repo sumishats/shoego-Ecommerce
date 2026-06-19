@@ -58,13 +58,14 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		//coupon management
 		userProtected.POST("/coupons/apply", handlers.ApplyCoupon)
 		userProtected.DELETE("/coupons/remove", handlers.RemoveCoupon)
-		// userProtected.GET("/checkout", handlers.GetCheckoutPage)
+
 	}
 	{
 		//checkout management
 		userProtected.GET("/checkout", handlers.GetCheckoutPage)
 		userProtected.POST("/checkout/place-order", handlers.PlaceCODOrder)
-
+		userProtected.POST("/checkout/wallet",handlers.PlaceWalletOrder)
+		
 		userProtected.POST("/checkout/razorpay", handlers.CreateRazorpayOrder)
 		userProtected.POST("/checkout/razorpay/verify", handlers.VerifyPayment)
 
@@ -79,7 +80,11 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		userProtected.PATCH("/orders/:order_id/items/:item_id/return", handlers.ReturnOrderItem)
 		userProtected.GET("/orders/:order_id/invoice", handlers.DownloadInvoice)
 	}
-
+	{
+		//wallet
+		userProtected.GET("/wallet", handlers.GetWallet)
+		userProtected.GET("/wallet/history", handlers.GetWalletHistory)
+	}
 	{
 		// user profile management
 		userProtected.GET("/profile", handlers.GetProfile)
