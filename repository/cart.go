@@ -129,24 +129,72 @@ func ClearCartByUserID(userID uint) error {
 	return tx.Commit().Error
 }
 
+// func GetCartSubtotal(userID uint) (float64, error) {
+
+// 	var subtotal float64
+
+// 	err := database.DB.
+// 		Table("cart_items").
+// 		Select("COALESCE(SUM(products.price * cart_items.quantity),0)").
+// 		Joins("JOIN carts ON carts.id = cart_items.cart_id").
+// 		Joins("JOIN products ON products.id = cart_items.product_id").
+// 		Where("carts.user_id = ? AND cart_items.deleted_at IS NULL", userID).
+// 		Scan(&subtotal).Error
+
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return subtotal, nil
+// }
+
 func GetCartSubtotal(userID uint) (float64, error) {
 
-	var subtotal float64
-
-	err := database.DB.
-		Table("cart_items").
-		Select("COALESCE(SUM(products.price * cart_items.quantity),0)").
-		Joins("JOIN carts ON carts.id = cart_items.cart_id").
-		Joins("JOIN products ON products.id = cart_items.product_id").
-		Where("carts.user_id = ? AND cart_items.deleted_at IS NULL", userID).
-		Scan(&subtotal).Error
-
+	cartItems, err := GetCartItemsByUserID(userID)
 	if err != nil {
 		return 0, err
 	}
 
+	var subtotal float64
+
+	for _, item := range cartItems {
+
+		price := item.Product.Price
+
+		bestOffer := 0.0
+
+		// Product Offer
+
+		productOffer, err := GetActiveProductOffer(item.ProductID)
+
+		if err == nil {
+
+			bestOffer = productOffer.DiscountPercentage
+		}
+
+		categoryOffer, err := GetActiveCategoryOffer(item.Product.CategoryID)
+
+		if err == nil {
+
+			if categoryOffer.DiscountPercentage > bestOffer {
+
+				bestOffer = categoryOffer.DiscountPercentage
+			}
+		}
+
+		if bestOffer > 0 {
+
+			price =
+				item.Product.Price -
+					(item.Product.Price*bestOffer)/100
+		}
+
+		subtotal += price * float64(item.Quantity)
+	}
+
 	return subtotal, nil
 }
+
 // func GetCartByUserID(userID uint) (*domain.Cart, error) {
 
 // 	var cart domain.Cart

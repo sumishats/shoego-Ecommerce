@@ -41,13 +41,14 @@ func UsersignUp(user models.SignupDetail) error {
 
 	// temporary save full info in OTP table before signup
 	otpData := domain.OTPVerification{
-		Email:     user.Email,
-		Name:      user.Name,
-		Phone:     user.Phone,
-		Password:  hashedPassword,
-		OTP:       otp,
-		Type:      "signup",
-		ExpiresAt: expiry,
+		Email:        user.Email,
+		Name:         user.Name,
+		Phone:        user.Phone,
+		Password:     hashedPassword,
+		ReferralCode: user.ReferralCode,
+		OTP:          otp,
+		Type:         "signup",
+		ExpiresAt:    expiry,
 	}
 
 	err = repository.SaveOTPFull(otpData)

@@ -38,6 +38,43 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 			Password: otpData.Password,
 			Phone:    otpData.Phone,
 		})
+		if otpData.ReferralCode != "" {
+
+			referrer, err := repository.GetUserByReferralCode(
+				otpData.ReferralCode,
+			)
+
+			if err == nil {
+
+				wallet, err := repository.GetWalletByUserID(referrer.ID)
+
+				if err != nil {
+
+					wallet = &domain.Wallet{
+						UserID:  referrer.ID,
+						Balance: 0,
+					}
+
+					repository.CreateWallet(wallet)
+				}
+
+				newBalance := wallet.Balance + 100
+
+				repository.UpdateWalletBalance(
+					wallet.ID,
+					newBalance,
+				)
+
+				repository.CreateWalletTransaction(
+					&domain.WalletTransaction{
+						WalletID:    wallet.ID,
+						Amount:      100,
+						Type:        "credit",
+						Description: "Referral Reward",
+					},
+				)
+			}
+		}
 		if err != nil {
 			return nil, err
 		}

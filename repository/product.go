@@ -122,7 +122,14 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 	var products []domain.Product
 	var totalCount int64
 
-	db := database.DB.Model(&domain.Product{}).Preload("Images").Joins("JOIN categories ON categories.id = products.category_id").Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
+	// db := database.DB.Model(&domain.Product{}).Preload("Images").Joins("JOIN categories ON categories.id = products.category_id").Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
+
+	db := database.DB.Model(&domain.Product{}).
+	Preload("Images").
+	Preload("ProductOffers"). // NEW
+	Preload("Category.CategoryOffers"). // NEW
+	Joins("JOIN categories ON categories.id = products.category_id").
+	Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
 
 	if strings.TrimSpace(query.Search) != "" {
 		searchValue := "%" + strings.TrimSpace(query.Search) + "%"

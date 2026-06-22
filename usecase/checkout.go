@@ -70,14 +70,49 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 			image = product.Images[0].ImageURL
 		}
 
+		discountedPrice := product.Price
+
+		offerPercentage := 0.0
+
+		// Product Offer
+
+		productOffer, err := repository.GetActiveProductOffer(product.ID)
+
+		if err == nil {
+
+			offerPercentage = productOffer.DiscountPercentage
+		}
+
+		// ===== ADDED CATEGORY OFFER =====
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(product.CategoryID)
+
+		if err == nil {
+
+			if categoryOffer.DiscountPercentage > offerPercentage {
+
+				offerPercentage = categoryOffer.DiscountPercentage
+			}
+		}
+
+		// Final Price
+
+		if offerPercentage > 0 {
+
+			discountedPrice =
+				product.Price -
+					(product.Price*offerPercentage)/100
+		}
+
 		items = append(items, models.CheckoutItemResponse{
 			ProductID: product.ID,
 			Name:      product.Name,
 			Image:     image,
 			Quantity:  item.Quantity,
-			Price:     product.Price,
-			ItemTotal: product.Price * float64(item.Quantity),
+			Price:     discountedPrice,
+			ItemTotal: discountedPrice * float64(item.Quantity),
 		})
+
 	}
 
 	// 3. Get single cart (IMPORTANT)
@@ -333,7 +368,7 @@ func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceO
 		return nil, err
 	}
 	newBalance := wallet.Balance - checkout.FinalAmount
-	
+
 	err = repository.UpdateWalletBalance(wallet.ID, newBalance)
 	if err != nil {
 		return nil, err
