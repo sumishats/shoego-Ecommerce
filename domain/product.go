@@ -4,16 +4,17 @@ import "gorm.io/gorm"
 
 type Product struct {
 	gorm.Model
-	Name        string
-	Description string
-	BrandID     uint
-	SKU         string
-	Price       float64
-	Stock       int
-	CategoryID  uint
-	Category    Category `gorm:"foreignKey:CategoryID"`
-	IsListed    bool
-	Images      []ProductImage `gorm:"foreignKey:ProductID"`
+	Name          string
+	Description   string
+	BrandID       uint
+	SKU           string
+	Price         float64
+	Stock         int
+	CategoryID    uint
+	Category      Category `gorm:"foreignKey:CategoryID"`
+	IsListed      bool
+	Images        []ProductImage `gorm:"foreignKey:ProductID"`
+	ProductOffers []ProductOffer `gorm:"foreignKey:ProductID"`
 }
 
 type ProductImage struct {
@@ -24,7 +25,8 @@ type ProductImage struct {
 
 type Category struct {
 	gorm.Model
-	Name        string `gorm:"unique;not null"`
-	Description string
-	IsListed    bool `gorm:"default:true"`
+	Name           string `gorm:"unique;not null"`
+	Description    string
+	IsListed       bool            `gorm:"default:true"`
+	CategoryOffers []CategoryOffer `gorm:"foreignKey:CategoryID"`
 }

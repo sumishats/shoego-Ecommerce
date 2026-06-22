@@ -81,16 +81,18 @@ type UserProductQuery struct {
 }
 
 type UserProductResponse struct {
-	ID          uint     `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	BrandID     uint     `json:"brand_id"`
-	SKU         string   `json:"sku"`
-	Price       float64  `json:"price"`
-	Stock       int      `json:"stock"`
-	CategoryID  uint     `json:"category_id"`
-	IsListed    bool     `json:"is_listed"`
-	Images      []string `json:"images"`
+	ID              uint     `json:"id"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	BrandID         uint     `json:"brand_id"`
+	SKU             string   `json:"sku"`
+	Price           float64  `json:"price"`
+	DiscountedPrice float64  `json:"discounted_price"`
+	OfferPercentage float64  `json:"offer_percentage"`
+	Stock           int      `json:"stock"`
+	CategoryID      uint     `json:"category_id"`
+	IsListed        bool     `json:"is_listed"`
+	Images          []string `json:"images"`
 }
 
 type UserProductListResponse struct {
@@ -102,14 +104,18 @@ type UserProductListResponse struct {
 }
 
 type UserProductDetailResponse struct {
-	ID              uint                  `json:"id"`
-	Name            string                `json:"name"`
-	Description     string                `json:"description"`
-	BrandID         uint                  `json:"brand_id"`
-	SKU             string                `json:"sku"`
-	Price           float64               `json:"price"`
+	ID          uint    `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	BrandID     uint    `json:"brand_id"`
+	SKU         string  `json:"sku"`
+	Price       float64 `json:"price"`
+
 	DiscountedPrice float64               `json:"discounted_price"`
+	OfferPercentage float64               `json:"offer_percentage"`
+	OfferName       string                `json:"offer_name"`
 	Rating          float64               `json:"rating"`
+	
 	Stock           int                   `json:"stock"`
 	CategoryID      uint                  `json:"category_id"`
 	CategoryName    string                `json:"category_name"`

@@ -5,6 +5,7 @@ type SignupDetail struct {
 	Email    string `json:"email" gorm:"unique;not null"`
 	Password string `json:"password"`
 	Phone    string `json:"phone"`
+	ReferralCode string `json:"referral_code"`
 }
 
 type SignupDetailResponse struct {

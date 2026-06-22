@@ -36,18 +36,28 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.GET("/categories", handlers.GetCategories)
 	}
 	{
+		//offer
+		adminProtected.POST("/offers/product", handlers.CreateProductOffer)
+		adminProtected.GET("/offers/product", handlers.GetAllProductOffers)
+		adminProtected.DELETE("/offers/product/:id", handlers.DeleteProductOffer)
+
+		adminProtected.POST("/category-offers", handlers.CreateCategoryOffer)
+		adminProtected.GET("/category-offers",handlers.GetAllCategoryOffers)
+		adminProtected.DELETE("/category-offers/:id", handlers.DeleteCategoryOffer)
+	}
+	{
 		//order
 		adminProtected.GET("/orders", handlers.GetAdminOrders)
 		adminProtected.GET("/orders/:id", handlers.GetAdminOrderDetail)
 		adminProtected.PATCH("/orders/:id/status", handlers.UpdateAdminOrderStatus)
-		//inventory 
+		//inventory
 		adminProtected.GET("/inventory", handlers.GetAdminInventory)
 		adminProtected.PATCH("/inventory/:id/stock", handlers.UpdateAdminProductStock)
 	}
 	{
 		//coupon managemnt
-		adminProtected.POST("/coupons",handlers.CreateCoupon)
-		adminProtected.GET("/coupons",handlers.GetAllCoupons)
+		adminProtected.POST("/coupons", handlers.CreateCoupon)
+		adminProtected.GET("/coupons", handlers.GetAllCoupons)
 		adminProtected.DELETE("/coupons/:id", handlers.DeleteCoupon)
 	}
 	{

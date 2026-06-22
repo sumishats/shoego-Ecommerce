@@ -9,6 +9,7 @@ import (
 	"shoego/models"
 	"shoego/repository"
 	"strconv"
+	"time"
 )
 
 // admin product
@@ -258,6 +259,51 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 		for _, img := range p.Images {
 			images = append(images, img.ImageURL)
 		}
+		bestOffer := 0.0
+		now := time.Now()
+
+		// Product Offer
+		for _, offer := range p.ProductOffers {
+
+			if offer.IsActive &&
+				now.After(offer.StartDate) &&
+				now.Before(offer.EndDate) {
+
+				if offer.DiscountPercentage > bestOffer {
+					bestOffer = offer.DiscountPercentage
+				}
+			}
+		}
+		// ===== ADDED CATEGORY OFFER =====
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(p.CategoryID)
+
+		if err == nil {
+
+			if categoryOffer.DiscountPercentage > bestOffer {
+
+				bestOffer = categoryOffer.DiscountPercentage
+			}
+		}
+		// Category Offer
+		// for _, offer := range p.Category.CategoryOffers {
+
+		// 	if offer.IsActive &&
+		// 		now.After(offer.StartDate) &&
+		// 		now.Before(offer.EndDate) {
+
+		// 		if offer.DiscountPercentage > bestOffer {
+		// 			bestOffer = offer.DiscountPercentage
+		// 		}
+		// 	}
+		// }
+
+		discountedPrice := p.Price
+
+		if bestOffer > 0 {
+			discountedPrice =
+				p.Price - (p.Price * bestOffer / 100)
+		}
 
 		resp = append(resp, models.UserProductResponse{
 			ID:          p.ID,
@@ -266,11 +312,29 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 			BrandID:     p.BrandID,
 			SKU:         p.SKU,
 			Price:       p.Price,
-			Stock:       p.Stock,
-			CategoryID:  p.CategoryID,
-			IsListed:    p.IsListed,
-			Images:      images,
+
+			// NEW
+			DiscountedPrice: discountedPrice,
+			OfferPercentage: bestOffer,
+
+			Stock:      p.Stock,
+			CategoryID: p.CategoryID,
+			IsListed:   p.IsListed,
+			Images:     images,
 		})
+
+		// resp = append(resp, models.UserProductResponse{
+		// 	ID:          p.ID,
+		// 	Name:        p.Name,
+		// 	Description: p.Description,
+		// 	BrandID:     p.BrandID,
+		// 	SKU:         p.SKU,
+		// 	Price:       p.Price,
+		// 	Stock:       p.Stock,
+		// 	CategoryID:  p.CategoryID,
+		// 	IsListed:    p.IsListed,
+		// 	Images:      images,
+		// })
 	}
 
 	totalPages := int(math.Ceil(float64(totalCount) / float64(query.Limit)))
@@ -301,6 +365,45 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		status = "out_of_stock"
 	}
 
+	discountedPrice := product.Price
+
+	offerPercentage := 0.0
+	offerName := ""
+
+	offer, err := repository.GetActiveProductOffer(product.ID)
+
+	if err == nil {
+
+		offerPercentage = offer.DiscountPercentage
+		offerName = offer.OfferName
+	}
+
+	categoryOffer, err := repository.GetActiveCategoryOffer(product.CategoryID)
+
+	if err == nil {
+
+		if categoryOffer.DiscountPercentage > offerPercentage {
+
+			offerPercentage = categoryOffer.DiscountPercentage
+			offerName = categoryOffer.OfferName
+		}
+	}
+
+	if offerPercentage > 0 {
+
+		discountedPrice = product.Price - (product.Price*offerPercentage)/100
+	}
+
+	// discountedPrice := product.Price
+
+	// offer, err := repository.GetActiveProductOffer(product.ID)
+	// if err == nil {
+
+	// 	discountedPrice =
+
+	// 		product.Price -
+	// 			(product.Price*offer.DiscountPercentage)/100
+	// }
 	related, err := repository.GetRelatedUserProducts(product.CategoryID, product.ID, 4)
 	if err != nil {
 		return nil, err
@@ -313,18 +416,44 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		for _, img := range p.Images {
 			relImages = append(relImages, img.ImageURL)
 		}
+		relatedDiscountedPrice := p.Price
 
+		bestOffer := 0.0
+
+		productOffer, err := repository.GetActiveProductOffer(p.ID)
+
+		if err == nil {
+
+			bestOffer = productOffer.DiscountPercentage
+		}
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(p.CategoryID)
+
+		if err == nil {
+
+			if categoryOffer.DiscountPercentage > bestOffer {
+
+				bestOffer = categoryOffer.DiscountPercentage
+			}
+		}
+
+		if bestOffer > 0 {
+
+			relatedDiscountedPrice =p.Price -(p.Price*bestOffer)/100
+		}
+		
 		relatedProducts = append(relatedProducts, models.UserProductResponse{
-			ID:          p.ID,
-			Name:        p.Name,
-			Description: p.Description,
-			BrandID:     p.BrandID,
-			SKU:         p.SKU,
-			Price:       p.Price,
-			Stock:       p.Stock,
-			CategoryID:  p.CategoryID,
-			IsListed:    p.IsListed,
-			Images:      relImages,
+			ID:              p.ID,
+			Name:            p.Name,
+			Description:     p.Description,
+			BrandID:         p.BrandID,
+			SKU:             p.SKU,
+			Price:           p.Price,
+			DiscountedPrice: relatedDiscountedPrice,
+			Stock:           p.Stock,
+			CategoryID:      p.CategoryID,
+			IsListed:        p.IsListed,
+			Images:          relImages,
 		})
 	}
 
@@ -348,7 +477,9 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		BrandID:         product.BrandID,
 		SKU:             product.SKU,
 		Price:           product.Price,
-		DiscountedPrice: product.Price * 0.9,
+		DiscountedPrice: discountedPrice,
+		OfferPercentage: offerPercentage,
+		OfferName:       offerName,
 		Rating:          4.2,
 		Stock:           product.Stock,
 		CategoryID:      product.CategoryID,

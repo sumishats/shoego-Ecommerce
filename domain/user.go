@@ -10,6 +10,7 @@ type User struct {
 	Password     string `json:"password"`
 	Phone        string `json:"phone"`
 	ProfileImage string `json:"profile_image"`
+	ReferralCode string `gorm:"unique"`
 	Blocked      bool   `json:"blocked" gorm:"default:false"`
 	IsAdmin      bool   `json:"is_admin" gorm:"default:false"`
 }
@@ -26,7 +27,6 @@ type Address struct {
 	State     string `json:"state"`
 	Pincode   string `json:"pincode"`
 	IsDefault bool   `json:"is_default"`
-	
 }
 type BlacklistToken struct {
 	gorm.Model

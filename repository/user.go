@@ -4,6 +4,7 @@ import (
 	"errors"
 	"shoego/database"
 	"shoego/domain"
+	"shoego/helper"
 	"shoego/models"
 	"time"
 
@@ -63,10 +64,11 @@ func CheckingPhoneExists(phone string) (*domain.User, error) {
 
 func SignupInsert(user models.SignupDetail) (models.SignupDetailResponse, error) {
 	dbUser := domain.User{
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: user.Password,
-		Phone:    user.Phone,
+		Name:         user.Name,
+		Email:        user.Email,
+		Password:     user.Password,
+		Phone:        user.Phone,
+		ReferralCode: helper.GenerateReferralCode(),
 	}
 
 	err := database.DB.Create(&dbUser).Error

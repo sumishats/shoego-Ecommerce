@@ -36,6 +36,10 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		//check product availability
 		userProtected.GET("/products/:id/validate", handlers.ValidateUserProductAvailability)
 	}
+	{
+		//referral 
+		userProtected.GET("/referral", handlers.GetReferralDetails)
+	}
 
 	{
 		//cart management
@@ -65,7 +69,7 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		userProtected.GET("/checkout", handlers.GetCheckoutPage)
 		userProtected.POST("/checkout/place-order", handlers.PlaceCODOrder)
 		userProtected.POST("/checkout/wallet",handlers.PlaceWalletOrder)
-		
+
 		userProtected.POST("/checkout/razorpay", handlers.CreateRazorpayOrder)
 		userProtected.POST("/checkout/razorpay/verify", handlers.VerifyPayment)
 

@@ -36,7 +36,6 @@ func AddToCart(userID, productID uint) error {
 		return err
 	}
 
-	
 	item, err := repository.GetCartItem(cart.ID, productID)
 	if err == nil {
 		newQty := item.Quantity + 1
@@ -73,7 +72,6 @@ func AddToCart(userID, productID uint) error {
 
 	return nil
 }
-
 
 func GetCart(userID uint) (*models.CartResponse, error) {
 	items, err := repository.GetCartItemsByUserID(userID)
@@ -116,23 +114,62 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 			images = append(images, img.ImageURL)
 		}
 
+		discountedPrice := product.Price
+
+		offerPercentage := 0.0
+		offerName := ""
+
+		// Product Offer
+		productOffer, err := repository.GetActiveProductOffer(product.ID)
+
+		if err == nil {
+
+			offerPercentage = productOffer.DiscountPercentage
+			offerName = productOffer.OfferName
+		}
+
+		// ===== ADDED CATEGORY OFFER =====
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(product.CategoryID)
+
+		if err == nil {
+
+			if categoryOffer.DiscountPercentage > offerPercentage {
+
+				offerPercentage = categoryOffer.DiscountPercentage
+				offerName = categoryOffer.OfferName
+			}
+		}
+
+		// Final Price
+
+		if offerPercentage > 0 {
+
+			discountedPrice =
+				product.Price -
+					(product.Price*offerPercentage)/100
+		}
+		
 		//caculate subtotal for one cart item
-		subtotal := float64(item.Quantity) * product.Price
+		subtotal := float64(item.Quantity) * discountedPrice
 		if isAvailable {
 			resp.TotalAmount += subtotal
 		}
 
 		resp.Items = append(resp.Items, models.CartItemResponse{
-			ProductID:    product.ID,
-			Name:         product.Name,
-			Price:        product.Price,
-			Quantity:     item.Quantity,
-			Stock:        product.Stock,
-			CategoryName: product.Category.Name,
-			Images:       images,
-			Subtotal:     subtotal,
-			Status:       status,
-			IsAvailable:  isAvailable,
+			ProductID:       product.ID,
+			Name:            product.Name,
+			Price:           product.Price,
+			DiscountedPrice: discountedPrice,
+			OfferPercentage: offerPercentage,
+			OfferName:       offerName,
+			Quantity:        item.Quantity,
+			Stock:           product.Stock,
+			CategoryName:    product.Category.Name,
+			Images:          images,
+			Subtotal:        subtotal,
+			Status:          status,
+			IsAvailable:     isAvailable,
 		})
 	}
 
