@@ -19,13 +19,11 @@ func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) err
 		return errors.New("minimum 3 images required")
 	}
 
-	// check category exists
 	category, err := repository.GetCategoryByID(req.CategoryID)
 	if err != nil {
 		return errors.New("category not found")
 	}
 
-	//check category is listed
 	if !category.IsListed {
 		return errors.New("category is not listed")
 	}
@@ -63,28 +61,22 @@ func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) err
 	return repository.CreateProductImages(images)
 }
 
-func EditProduct(productID uint, req models.EditProductRequest, files []*multipart.FileHeader) error {
+func EditProduct(productID uint,updates map[string]interface{},files []*multipart.FileHeader,) error {
 
 	product, err := repository.GetProductByID(productID)
 	if err != nil {
 		return err
 	}
 
-	err = repository.UpdateProduct(productID, map[string]interface{}{
-		"name":        req.Name,
-		"description": req.Description,
-		"brand_id":    req.BrandID,
-		"sku":         req.SKU,
-		"price":       req.Price,
-		"stock":       req.Stock,
-		"category_id": req.CategoryID,
-	})
-	if err != nil {
-		return err
+	if len(updates) > 0 {
+		err = repository.UpdateProduct(productID, updates)
+		if err != nil {
+			return err
+		}
 	}
 
-	// if new images are uploaded, replace old images
 	if len(files) > 0 {
+
 		for _, img := range product.Images {
 			helper.DeleteFileIfExists(img.ImageURL)
 		}
@@ -97,6 +89,7 @@ func EditProduct(productID uint, req models.EditProductRequest, files []*multipa
 		var images []domain.ProductImage
 
 		for _, file := range files {
+
 			path, err := helper.SaveProductImage(file, "./images")
 			if err != nil {
 				return err
@@ -156,7 +149,6 @@ func GetProducts(pageStr, limitStr string) (*models.ProductListResponse, error) 
 			images = append(images, img.ImageURL)
 		}
 
-		//response for each product
 		resp = append(resp, models.ProductResponse{
 			ID:          p.ID,
 			Name:        p.Name,
@@ -262,7 +254,6 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 		bestOffer := 0.0
 		now := time.Now()
 
-		// Product Offer
 		for _, offer := range p.ProductOffers {
 
 			if offer.IsActive &&
@@ -274,7 +265,6 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 				}
 			}
 		}
-		// ===== ADDED CATEGORY OFFER =====
 
 		categoryOffer, err := repository.GetActiveCategoryOffer(p.CategoryID)
 
@@ -285,18 +275,6 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 				bestOffer = categoryOffer.DiscountPercentage
 			}
 		}
-		// Category Offer
-		// for _, offer := range p.Category.CategoryOffers {
-
-		// 	if offer.IsActive &&
-		// 		now.After(offer.StartDate) &&
-		// 		now.Before(offer.EndDate) {
-
-		// 		if offer.DiscountPercentage > bestOffer {
-		// 			bestOffer = offer.DiscountPercentage
-		// 		}
-		// 	}
-		// }
 
 		discountedPrice := p.Price
 
@@ -306,14 +284,12 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 		}
 
 		resp = append(resp, models.UserProductResponse{
-			ID:          p.ID,
-			Name:        p.Name,
-			Description: p.Description,
-			BrandID:     p.BrandID,
-			SKU:         p.SKU,
-			Price:       p.Price,
-
-			// NEW
+			ID:              p.ID,
+			Name:            p.Name,
+			Description:     p.Description,
+			BrandID:         p.BrandID,
+			SKU:             p.SKU,
+			Price:           p.Price,
 			DiscountedPrice: discountedPrice,
 			OfferPercentage: bestOffer,
 
@@ -323,18 +299,6 @@ func GetUserProducts(query models.UserProductQuery) (*models.UserProductListResp
 			Images:     images,
 		})
 
-		// resp = append(resp, models.UserProductResponse{
-		// 	ID:          p.ID,
-		// 	Name:        p.Name,
-		// 	Description: p.Description,
-		// 	BrandID:     p.BrandID,
-		// 	SKU:         p.SKU,
-		// 	Price:       p.Price,
-		// 	Stock:       p.Stock,
-		// 	CategoryID:  p.CategoryID,
-		// 	IsListed:    p.IsListed,
-		// 	Images:      images,
-		// })
 	}
 
 	totalPages := int(math.Ceil(float64(totalCount) / float64(query.Limit)))
@@ -359,7 +323,6 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		images = append(images, img.ImageURL)
 	}
 
-	//set product status is available or out of stock
 	status := "available"
 	if product.Stock <= 0 {
 		status = "out_of_stock"
@@ -394,16 +357,6 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		discountedPrice = product.Price - (product.Price*offerPercentage)/100
 	}
 
-	// discountedPrice := product.Price
-
-	// offer, err := repository.GetActiveProductOffer(product.ID)
-	// if err == nil {
-
-	// 	discountedPrice =
-
-	// 		product.Price -
-	// 			(product.Price*offer.DiscountPercentage)/100
-	// }
 	related, err := repository.GetRelatedUserProducts(product.CategoryID, product.ID, 4)
 	if err != nil {
 		return nil, err
@@ -439,9 +392,9 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 
 		if bestOffer > 0 {
 
-			relatedDiscountedPrice =p.Price -(p.Price*bestOffer)/100
+			relatedDiscountedPrice = p.Price - (p.Price*bestOffer)/100
 		}
-		
+
 		relatedProducts = append(relatedProducts, models.UserProductResponse{
 			ID:              p.ID,
 			Name:            p.Name,

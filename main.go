@@ -55,7 +55,6 @@ func main() {
 
 	router.Static("/images", "./images")
 
-	// ADDED
 	router.Static("/static", "./template")
 
 	routes.UserRoutes(router.Group("/"), db)

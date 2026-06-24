@@ -96,17 +96,6 @@ func GetActiveCategoryOffer(categoryID uint) (*domain.CategoryOffer, error) {
 	return &offer, nil
 }
 
-// func GetCategoryByID(id uint) (*domain.Category, error) {
-// 	var category domain.Category
-
-// 	err := database.DB.First(&category, id).Error
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-//		return &category, nil/
-//	}
 func GetUserByReferralCode(code string) (*domain.User, error) {
 
 	var user domain.User

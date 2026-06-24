@@ -70,6 +70,7 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		userProtected.POST("/checkout/place-order", handlers.PlaceCODOrder)
 		userProtected.POST("/checkout/wallet",handlers.PlaceWalletOrder)
 
+		//razorpay
 		userProtected.POST("/checkout/razorpay", handlers.CreateRazorpayOrder)
 		userProtected.POST("/checkout/razorpay/verify", handlers.VerifyPayment)
 

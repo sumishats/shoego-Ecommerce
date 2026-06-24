@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
 // @Summary  OTP login
 // @Description Send OTP to Authenticate user
 // @Tags User OTP Login
@@ -17,7 +18,6 @@ import (
 // @Success 200 {object} response.Response{}
 // @Failure 500 {object} response.Response{}
 // @Router /send-otp [post]
-
 
 func ResendOTP(c *gin.Context) {
 	var req models.ResendOTP
@@ -59,22 +59,13 @@ func VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	user, err := usecase.VerifyOTPAndCreateUser(otpReq)
+	_, err := usecase.VerifyOTPAndCreateUser(otpReq)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, err.Error(), nil, nil)
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
-
-	//return user response struct 
-	userRes := response.UserResponse{
-		ID:    user.User.ID,
-		Name:  user.User.Name,
-		Email: user.User.Email,
-		Phone: user.User.Phone,
-	}
-	// Send success response
-	successRes := response.ClientResponse(http.StatusOK,"OTP verified successfully",userRes,nil,)
+	successRes := response.ClientResponse(http.StatusOK, "OTP verified successfully", nil, nil)
 	c.JSON(http.StatusOK, successRes)
 }
 

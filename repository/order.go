@@ -89,7 +89,6 @@ func UpdateOrderStatus(orderID uint, status string) error {
 			}
 		}
 
-	
 		// NEW CODE START
 		err := database.DB.Model(&domain.OrderItem{}).
 			Where("order_id = ? AND item_status = ?", order.ID, "return_requested").
@@ -98,7 +97,7 @@ func UpdateOrderStatus(orderID uint, status string) error {
 		if err != nil {
 			return err
 		}
-	
+
 	}
 
 	updates := map[string]interface{}{
@@ -125,6 +124,7 @@ func UpdateOrderStatus(orderID uint, status string) error {
 		Where("id = ?", orderID).
 		Updates(updates).Error
 }
+
 // inventory admin
 
 func GetAdminInventory(search, stockFilter, sortBy string, limit, offset int) ([]domain.Product, int64, error) {
@@ -192,38 +192,22 @@ func GetUserOrders(userID uint, search string, limit, offset int) ([]domain.Orde
 	return orders, err
 }
 
-// func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
-// 	var order domain.Order
-// 	err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where(" user_id AND order_id = ?", order.UserID, orderID).First(&order).Error
-// 	return order, err
-// }
+//	func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
+//		var order domain.Order
+//		err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where(" user_id AND order_id = ?", order.UserID, orderID).First(&order).Error
+//		return order, err
+//	}
 func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
 	var order domain.Order
 
-	err := database.DB.
-		Preload("OrderItems.Product.Images").
-		Preload("Address").
-		Where("user_id = ? AND order_id = ?", userID, orderID).
-		First(&order).Error
-
+	err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where("user_id = ? AND order_id = ?", userID, orderID).First(&order).Error
 	return order, err
 }
-// func GetOrderByOrderIDPayment(orderID string) (*domain.Order, error) {
 
-// 	var order domain.Order
-
-// 	err := database.DB.Where("order_id = ?", orderID).First(&order).Error
-	
-
-// 	return &order, err
-// }
 func GetOrderByOrderIDPayment(orderID string) (*domain.Order, error) {
 	var order domain.Order
 
-	err := database.DB.
-		Where("order_id = ?", orderID).
-		First(&order).Error
-
+	err := database.DB.Where("order_id = ?", orderID).First(&order).Error
 	return &order, err
 }
 

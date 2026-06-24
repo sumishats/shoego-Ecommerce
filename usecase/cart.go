@@ -53,7 +53,6 @@ func AddToCart(userID, productID uint) error {
 			return err
 		}
 
-		// remove from wishlist if product exists there
 		_ = repository.RemoveProductFromWishlist(userID, productID)
 
 		return nil
@@ -128,8 +127,6 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 			offerName = productOffer.OfferName
 		}
 
-		// ===== ADDED CATEGORY OFFER =====
-
 		categoryOffer, err := repository.GetActiveCategoryOffer(product.CategoryID)
 
 		if err == nil {
@@ -141,16 +138,12 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 			}
 		}
 
-		// Final Price
-
 		if offerPercentage > 0 {
 
-			discountedPrice =
-				product.Price -
-					(product.Price*offerPercentage)/100
+			discountedPrice =product.Price -(product.Price*offerPercentage)/100
 		}
-		
-		//caculate subtotal for one cart item
+
+	
 		subtotal := float64(item.Quantity) * discountedPrice
 		if isAvailable {
 			resp.TotalAmount += subtotal
