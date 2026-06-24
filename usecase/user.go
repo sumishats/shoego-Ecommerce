@@ -39,7 +39,6 @@ func UsersignUp(user models.SignupDetail) error {
 	otp := helper.GenerateOTP()
 	expiry := time.Now().Add(2 * time.Minute)
 
-	// temporary save full info in OTP table before signup
 	otpData := domain.OTPVerification{
 		Email:        user.Email,
 		Name:         user.Name,
@@ -68,13 +67,12 @@ func UsersignUp(user models.SignupDetail) error {
 
 func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 
-	// Validate email format
 	_, err := mail.ParseAddress(user.Email)
 	if err != nil {
 		return &models.TokenUser{}, errors.New("EMAIL SHOULD BE CORRECT FORMAT")
 	}
 
-	// Get user from users table
+
 	userDetails, err := repository.FindUserDetailByEmail(user)
 	if err != nil {
 		return &models.TokenUser{}, err
@@ -90,7 +88,6 @@ func UserLogged(user models.UserLogin) (*models.TokenUser, error) {
 		return &models.TokenUser{}, errors.New("hashed password not matching")
 	}
 
-	//create user response
 	userResp := models.SignupDetailResponse{
 		ID:    int(userDetails.ID),
 		Name:  userDetails.Name,
@@ -125,7 +122,6 @@ func GetUserProfile(userID uint) (*models.UserProfileResponse, error) {
 		return nil, err
 	}
 
-	//address convert to response
 	var addressResp []models.AddressResponse
 	for _, addr := range addresses {
 		addressResp = append(addressResp, models.AddressResponse{
@@ -190,7 +186,7 @@ func RequestEmailChange(userID uint, newEmail string) error {
 	return helper.SendOTPEmail(newEmail, otp)
 }
 
-// verify email , if valid update email in db
+
 func VerifyEmailChange(userID uint, req models.VerifyEmailChangeRequest) error {
 	_, err := repository.VerifyOTP(req.NewEmail, req.OTP, "email_change")
 	if err != nil {
@@ -234,7 +230,6 @@ func GetUserAddresses(userID uint) ([]models.AddressResponse, error) {
 }
 
 func AddUserAddress(userID uint, req models.AddAddressRequest) error {
-	//check new address is default or not
 	if req.IsDefault {
 		_ = repository.ClearDefaultAddresses(userID)
 	}

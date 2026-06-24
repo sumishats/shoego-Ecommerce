@@ -29,7 +29,6 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 		return nil, err
 	}
 
-	//user does not exist, create user
 	if userData == nil {
 
 		userInsert, err := repository.SignupInsert(models.SignupDetail{
@@ -43,35 +42,30 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 			referrer, err := repository.GetUserByReferralCode(
 				otpData.ReferralCode,
 			)
+if err == nil {
 
-			if err == nil {
+	wallet, err := repository.GetWalletByUserID(referrer.ID)
 
-				wallet, err := repository.GetWalletByUserID(referrer.ID)
+	if err != nil {
 
-				if err != nil {
+		wallet = &domain.Wallet{
+			UserID:  referrer.ID,
+			Balance: 0,
+		}
 
-					wallet = &domain.Wallet{
-						UserID:  referrer.ID,
-						Balance: 0,
-					}
-
-					repository.CreateWallet(wallet)
-				}
+		repository.CreateWallet(wallet)
+	}
 
 				newBalance := wallet.Balance + 100
 
-				repository.UpdateWalletBalance(
-					wallet.ID,
-					newBalance,
-				)
+				repository.UpdateWalletBalance(wallet.ID, newBalance)
 
-				repository.CreateWalletTransaction(
-					&domain.WalletTransaction{
-						WalletID:    wallet.ID,
-						Amount:      100,
-						Type:        "credit",
-						Description: "Referral Reward",
-					},
+				repository.CreateWalletTransaction(&domain.WalletTransaction{
+					WalletID:    wallet.ID,
+					Amount:      100,
+					Type:        "credit",
+					Description: "Referral Reward",
+				},
 				)
 			}
 		}
@@ -87,13 +81,12 @@ func VerifyOTPAndCreateUser(data models.VerifyOTP) (*models.TokenUser, error) {
 		}
 	}
 
-	// Delete OTP after create user
+	
 	err = repository.DeleteOTP(data.Email, "signup")
 	if err != nil {
 		return nil, err
 	}
 
-	// user response
 	userResp := models.SignupDetailResponse{
 		ID:    int(userData.ID),
 		Name:  userData.Name,

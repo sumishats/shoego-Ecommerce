@@ -16,12 +16,11 @@ import (
 func AddProduct(c *gin.Context) {
 	var req models.AddProductRequest
 
-	//request is multipart form data 
+	//request is multipart form data
 	req.Name = c.PostForm("name")
 	req.Description = c.PostForm("description")
 	req.SKU = c.PostForm("sku")
 
-	
 	price, err := strconv.ParseFloat(c.PostForm("price"), 64)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, "invalid price", nil, err.Error())
@@ -54,7 +53,7 @@ func AddProduct(c *gin.Context) {
 	}
 	req.CategoryID = uint(categoryID64)
 
-	//get all form including images 
+	//get all form including images
 	form, err := c.MultipartForm()
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, "invalid multipart form", nil, err.Error())
@@ -76,62 +75,89 @@ func AddProduct(c *gin.Context) {
 }
 
 func EditProduct(c *gin.Context) {
+
 	idParam := c.Param("id")
+
 	productID64, err := strconv.ParseUint(idParam, 10, 64)
-
 	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "invalid product id", nil, err.Error())
+		errRes := response.ClientResponse(http.StatusBadRequest,"invalid product id",nil,err.Error(),)
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
 
-	var req models.EditProductRequest
+	updates := make(map[string]interface{})
 
-	req.Name = c.PostForm("name")
-	req.Description = c.PostForm("description")
-	req.SKU = c.PostForm("sku")
-
-	price, err := strconv.ParseFloat(c.PostForm("price"), 64)
-	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "invalid price", nil, err.Error())
-		c.JSON(http.StatusBadRequest, errRes)
-		return
+	if name := c.PostForm("name"); name != "" {
+		updates["name"] = name
 	}
-	req.Price = price
 
-	stock, err := strconv.Atoi(c.PostForm("stock"))
-	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "invalid stock", nil, err.Error())
-		c.JSON(http.StatusBadRequest, errRes)
-		return
+	if description := c.PostForm("description"); description != "" {
+		updates["description"] = description
 	}
-	req.Stock = stock
 
-	brandID64, err := strconv.ParseUint(c.PostForm("brand_id"), 10, 64)
-	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "invalid brand id", nil, err.Error())
-		c.JSON(http.StatusBadRequest, errRes)
-		return
+	if sku := c.PostForm("sku"); sku != "" {
+		updates["sku"] = sku
 	}
-	req.BrandID = uint(brandID64)
 
-	categoryID64, err := strconv.ParseUint(c.PostForm("category_id"), 10, 64)
-	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "invalid category id", nil, err.Error())
-		c.JSON(http.StatusBadRequest, errRes)
-		return
+	if priceStr := c.PostForm("price"); priceStr != "" {
+
+		//form data covert string 
+		price, err := strconv.ParseFloat(priceStr, 64)
+		if err != nil {
+			errRes := response.ClientResponse(http.StatusBadRequest,"invalid price",nil,err.Error(),)
+			c.JSON(http.StatusBadRequest, errRes)
+			return
+		}
+
+		updates["price"] = price
 	}
-	req.CategoryID = uint(categoryID64)
+
+	if stockStr := c.PostForm("stock"); stockStr != "" {
+
+		stock, err := strconv.Atoi(stockStr)
+		if err != nil {
+			errRes := response.ClientResponse(http.StatusBadRequest,"invalid stock",nil,err.Error(),)
+			c.JSON(http.StatusBadRequest, errRes)
+			return
+		}
+
+		updates["stock"] = stock
+	}
+
+	if brandStr := c.PostForm("brand_id"); brandStr != "" {
+
+		brandID, err := strconv.ParseUint(brandStr, 10, 64)
+		if err != nil {
+			errRes := response.ClientResponse(http.StatusBadRequest,"invalid brand id",nil,err.Error(),)
+			c.JSON(http.StatusBadRequest, errRes)
+			return
+		}
+
+		updates["brand_id"] = uint(brandID)
+	}
+
+	if categoryStr := c.PostForm("category_id"); categoryStr != "" {
+
+		categoryID, err := strconv.ParseUint(categoryStr, 10, 64)
+		if err != nil {
+			errRes := response.ClientResponse(http.StatusBadRequest,"invalid category id",nil,err.Error(),)
+			c.JSON(http.StatusBadRequest, errRes)
+			return
+		}
+
+		updates["category_id"] = uint(categoryID)
+	}
 
 	var files []*multipart.FileHeader
+
 	form, err := c.MultipartForm()
 	if err == nil && form != nil {
 		files = form.File["images"]
 	}
 
-	err = usecase.EditProduct(uint(productID64), req, files)
+	err = usecase.EditProduct(uint(productID64), updates, files)
 	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest, "failed to edit product", nil, err.Error())
+		errRes := response.ClientResponse(http.StatusBadRequest,"failed to edit product",nil,err.Error(),)
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
@@ -174,7 +200,6 @@ func GetProducts(c *gin.Context) {
 	successRes := response.ClientResponse(http.StatusOK, "products fetched successfully", data, nil)
 	c.JSON(http.StatusOK, successRes)
 }
-
 
 //admin category management
 
@@ -276,7 +301,7 @@ func GetUserProducts(c *gin.Context) {
 	search := c.Query("search")
 	sort := c.Query("sort")
 
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1")) 
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
 	categoryID64, _ := strconv.ParseUint(c.DefaultQuery("category_id", "0"), 10, 64)
@@ -328,7 +353,7 @@ func GetUserProductDetails(c *gin.Context) {
 	c.JSON(http.StatusOK, successRes)
 }
 
-//check product is currently availbale 
+// check product is currently availbale
 func ValidateUserProductAvailability(c *gin.Context) {
 	idParam := c.Param("id")
 	productID64, err := strconv.ParseUint(idParam, 10, 64)
@@ -352,7 +377,7 @@ func ValidateUserProductAvailability(c *gin.Context) {
 //user category
 
 func GetUserCategories(c *gin.Context) {
-	search := c.Query("search") 
+	search := c.Query("search")
 	data, err := usecase.GetUserCategories(search)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusInternalServerError, "failed to fetch categories", nil, err.Error())

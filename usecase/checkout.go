@@ -33,7 +33,6 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 		})
 	}
 
-	// 2. Cart items
 	cartItems, err := repository.GetCartItemsForCheckout(userID)
 	if err != nil {
 		return nil, err
@@ -74,7 +73,6 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 
 		offerPercentage := 0.0
 
-		// Product Offer
 
 		productOffer, err := repository.GetActiveProductOffer(product.ID)
 
@@ -82,8 +80,6 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 
 			offerPercentage = productOffer.DiscountPercentage
 		}
-
-		// ===== ADDED CATEGORY OFFER =====
 
 		categoryOffer, err := repository.GetActiveCategoryOffer(product.CategoryID)
 
@@ -95,13 +91,10 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 			}
 		}
 
-		// Final Price
 
 		if offerPercentage > 0 {
 
-			discountedPrice =
-				product.Price -
-					(product.Price*offerPercentage)/100
+			discountedPrice =product.Price -(product.Price*offerPercentage)/100
 		}
 
 		items = append(items, models.CheckoutItemResponse{
@@ -115,28 +108,26 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 
 	}
 
-	// 3. Get single cart (IMPORTANT)
+	
 	cart, err := repository.GetCartByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 4. Subtotal (ONLY ONE SOURCE)
 	subtotal, err := repository.GetCartSubtotal(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. Tax
 	tax := math.Round((subtotal*0.05)*100) / 100
 
-	// 6. Shipping
+	
 	shipping := 50.0
 	if subtotal >= 1000 {
 		shipping = 0
 	}
 
-	// 7. Discount (SAFE)
+	
 	couponCode := ""
 	couponDiscount := 0.0
 
@@ -159,92 +150,6 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 	}, nil
 }
 
-// func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
-// 	addresses, err := repository.GetCheckoutAddresses(userID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	cartItems, err := repository.GetCartItemsForCheckout(userID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if len(cartItems) == 0 {
-// 		return nil, errors.New("cart is empty")
-// 	}
-
-// 	var addressRes []models.CheckoutAddressResponse
-// 	for _, addr := range addresses {
-// 		addressRes = append(addressRes, models.CheckoutAddressResponse{
-// 			ID:        addr.ID,
-// 			Name:      addr.Name,
-// 			Phone:     addr.Phone,
-// 			HouseName: addr.HouseName,
-// 			Street:    addr.Street,
-// 			City:      addr.City,
-// 			State:     addr.State,
-// 			Pincode:   addr.Pincode,
-// 			IsDefault: addr.IsDefault,
-// 		})
-// 	}
-
-// 	var itemRes []models.CheckoutItemResponse
-// 	var subtotal float64
-
-// 	for _, item := range cartItems {
-// 		product := item.Product
-
-// 		if !product.IsListed {
-// 			return nil, errors.New(product.Name + " is unavailable")
-// 		}
-
-// 		if !product.Category.IsListed {
-// 			return nil, errors.New(product.Name + " category is unavailable")
-// 		}
-
-// 		if product.Stock < item.Quantity {
-// 			return nil, errors.New(product.Name + " does not have enough stock")
-// 		}
-
-// 		image := ""
-// 		if len(product.Images) > 0 {
-// 			image = product.Images[0].ImageURL
-// 		}
-
-// 		itemTotal := product.Price * float64(item.Quantity)
-// 		subtotal += itemTotal
-
-// 		itemRes = append(itemRes, models.CheckoutItemResponse{
-// 			ProductID: product.ID,
-// 			Name:      product.Name,
-// 			Image:     image,
-// 			Quantity:  item.Quantity,
-// 			Price:     product.Price,
-// 			ItemTotal: itemTotal,
-// 		})
-// 	}
-
-// 	taxAmount := subtotal * 0.05
-// 	discountAmount := 0.0
-// 	shippingCharge := 50.0
-
-// 	if subtotal >= 1000 {
-// 		shippingCharge = 0
-// 	}
-
-// 	finalAmount := subtotal + taxAmount + shippingCharge - discountAmount
-
-// 	return &models.CheckoutPageResponse{
-// 		Addresses:      addressRes,
-// 		Items:          itemRes,
-// 		Subtotal:       subtotal,
-// 		TaxAmount:      taxAmount,
-// 		DiscountAmount: discountAmount,
-// 		ShippingCharge: shippingCharge,
-// 		FinalAmount:    finalAmount,
-// 	}, nil
-// }
 
 func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
 	if req.PaymentMethod != "cod" {
@@ -297,16 +202,6 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 	if err := repository.CreateOrderTransaction(order, orderItems, userID); err != nil {
 		return nil, err
 	}
-
-	// for _, item := range cartItems {
-	// 	if err := repository.CreateOrderTransaction(item.ProductID, item.Quantity); err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
-	// if err := repository.CreateOrderTransaction(userID); err != nil {
-	// 	return nil, err
-	// }
 
 	return &models.PlaceOrderResponse{
 		OrderID:     orderID,

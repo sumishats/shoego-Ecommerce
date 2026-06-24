@@ -1,13 +1,19 @@
 package models
 
+// type SignupDetail struct {
+// 	Name     string `json:"name"`
+// 	Email    string `json:"email" gorm:"unique;not null"`
+// 	Password string `json:"password"`
+// 	Phone    string `json:"phone"`
+// 	ReferralCode string `json:"referral_code"`
+// }
 type SignupDetail struct {
-	Name     string `json:"name"`
-	Email    string `json:"email" gorm:"unique;not null"`
-	Password string `json:"password"`
-	Phone    string `json:"phone"`
+	Name         string `json:"name" validate:"required,min=3,max=50"`
+	Email        string `json:"email" validate:"required,email"`
+	Password     string `json:"password" validate:"required,min=8"`
+	Phone        string `json:"phone" validate:"required,len=10,numeric"`
 	ReferralCode string `json:"referral_code"`
 }
-
 type SignupDetailResponse struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`

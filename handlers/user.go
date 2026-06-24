@@ -35,15 +35,15 @@ func Signup(c *gin.Context) {
 	// check the data sending in correct or not format
 	if err := validator.New().Struct(usersign); err != nil {
 
-		errres := response.ClientResponse(404, "They are not in format", nil, err.Error())
-		c.JSON(http.StatusBadGateway, errres)
+		errres := response.ClientResponse(http.StatusBadRequest, "They are not in format", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errres)
 		return
 	}
 
 	err := usecase.UsersignUp(usersign)
 
 	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadGateway, "user signup format error ", nil, err.Error())
+		errRes := response.ClientResponse(http.StatusBadRequest, "user signup format error ", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}

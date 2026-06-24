@@ -41,9 +41,6 @@ func UpdatePaymentStatusTx(tx *gorm.DB, orderID uint, status string) error {
 	return nil
 }
 
-//	func UpdatePaymentStatusTx(tx *gorm.DB, orderID uint, status string) error {
-//		return tx.Model(&domain.Payment{}).Where("order_id = ?", orderID).Update("status", status).Error
-//	}
 func UpdateRazorpayDetailsTx(tx *gorm.DB, orderID uint, razorpayPaymentID string, razorpaySignature string) error {
 	return tx.Model(&domain.Payment{}).Where("order_id = ?", orderID).Updates(map[string]interface{}{"razorpay_payment_id": razorpayPaymentID, "razorpay_signature": razorpaySignature}).Error
 }
@@ -77,28 +74,11 @@ func UpdateRazorpayOrderID(orderID uint, razorpayOrderID string) error {
 	return database.DB.Model(&domain.Payment{}).Where("order_id = ?", orderID).Update("razorpay_order_id", razorpayOrderID).Error
 }
 
-// func GetOrderByOrderIDString(orderID string) (*domain.Order, error) {
-
-// 	var order domain.Order
-
-// 	err := database.DB.
-// 		Where("order_id = ?", orderID).
-// 		First(&order).Error
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &order, nil
-// }
-
 func GetPaymentByRazorpayOrderID(razorpayOrderID string) (*domain.Payment, error) {
 
 	var payment domain.Payment
 
-	err := database.DB.
-		Where("razorpay_order_id = ?", razorpayOrderID).
-		First(&payment).Error
+	err := database.DB.Where("razorpay_order_id = ?", razorpayOrderID).First(&payment).Error
 
 	if err != nil {
 		return nil, err
@@ -122,9 +102,7 @@ func ReduceStockAfterPayment(orderID uint) error {
 
 	var orderItems []domain.OrderItem
 
-	err := database.DB.
-		Where("order_id = ?", orderID).
-		Find(&orderItems).Error
+	err := database.DB.Where("order_id = ?", orderID).Find(&orderItems).Error
 
 	if err != nil {
 		return err
@@ -134,9 +112,7 @@ func ReduceStockAfterPayment(orderID uint) error {
 
 		var product domain.Product
 
-		err := database.DB.
-			First(&product, item.ProductID).
-			Error
+		err := database.DB.First(&product, item.ProductID).Error
 
 		if err != nil {
 			return err

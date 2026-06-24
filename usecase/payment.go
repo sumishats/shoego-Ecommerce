@@ -100,7 +100,6 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 	return &models.CreateRazorpayOrderResponse{
 		OrderID:         order.OrderID,
 		RazorpayOrderID: razorpayOrderID,
-		// Amount:          amount,
 		Currency:    "INR",
 		Key:         config.AppConfig.RAZORPAY_KEY_ID,
 		FinalAmount: checkout.FinalAmount,
@@ -114,7 +113,6 @@ func VerifyPayment(req models.VerifyPaymentRequest) error {
 		return err
 	}
 
-	//razorpay verification
 	data := payment.RazorpayOrderID + "|" + req.RazorpayPaymentID
 
 	h := hmac.New(sha256.New, []byte(config.AppConfig.RAZORPAY_KEY_SECRET))
@@ -143,18 +141,12 @@ func VerifyPayment(req models.VerifyPaymentRequest) error {
 	if err != nil {
 		return err
 	}
-	// ADDED
+	
 	err = repository.ReduceStockAfterPayment(payment.OrderID)
 	if err != nil {
 		return err
 	}
 
-	// Debug logs
-	fmt.Println("Payment ID:", payment.ID)
-	fmt.Println("Order ID:", payment.OrderID)
-	fmt.Println("User ID:", payment.UserID)
-
-	// Clear cart
 	err = repository.ClearCartByUserID(payment.UserID)
 	if err != nil {
 		return err
