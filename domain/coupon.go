@@ -9,6 +9,7 @@ import (
 type Coupon struct {
 	gorm.Model
 	Code           string    `gorm:"unique;not null"`
+	DiscountType   string    `gorm:"not null"`
 	DiscountAmount float64   `gorm:"not null"`
 	MinimumAmount  float64   `gorm:"not null"`
 	ExpiryDate     time.Time `gorm:"not null"`

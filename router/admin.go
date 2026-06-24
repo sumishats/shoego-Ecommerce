@@ -42,7 +42,7 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.DELETE("/offers/product/:id", handlers.DeleteProductOffer)
 
 		adminProtected.POST("/category-offers", handlers.CreateCategoryOffer)
-		adminProtected.GET("/category-offers",handlers.GetAllCategoryOffers)
+		adminProtected.GET("/category-offers", handlers.GetAllCategoryOffers)
 		adminProtected.DELETE("/category-offers/:id", handlers.DeleteCategoryOffer)
 	}
 	{
@@ -58,6 +58,7 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		//coupon managemnt
 		adminProtected.POST("/coupons", handlers.CreateCoupon)
 		adminProtected.GET("/coupons", handlers.GetAllCoupons)
+		adminProtected.PUT("/coupons/:id", handlers.UpdateCoupon)
 		adminProtected.DELETE("/coupons/:id", handlers.DeleteCoupon)
 	}
 	{
