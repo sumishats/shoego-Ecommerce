@@ -33,14 +33,16 @@ func CreateProductOffer(c *gin.Context) {
 
 func GetAllProductOffers(c *gin.Context) {
 
-	offers, err := usecase.GetAllProductOffers()
-	if err != nil {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-		c.JSON(http.StatusBadRequest, response.ClientResponse(http.StatusBadRequest, "failed to fetch offers", nil, err.Error()))
+	data, err := usecase.GetAllProductOffers(page, limit)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ClientResponse(http.StatusBadRequest,"failed to fetch offers",nil,err.Error(),))
 		return
 	}
 
-	c.JSON(http.StatusOK, response.ClientResponse(http.StatusOK, "offers fetched successfully", offers, nil))
+	c.JSON(http.StatusOK, response.ClientResponse(http.StatusOK,"offers fetched successfully",data,nil,))
 }
 func DeleteProductOffer(c *gin.Context) {
 
@@ -84,16 +86,16 @@ func CreateCategoryOffer(c *gin.Context) {
 
 func GetAllCategoryOffers(c *gin.Context) {
 
-	offers, err := usecase.GetAllCategoryOffers()
-	if err != nil {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-		errRes := response.ClientResponse(http.StatusBadRequest, "failed to fetch category offers", nil, err.Error())
-		c.JSON(http.StatusBadRequest, errRes)
+	data, err := usecase.GetAllCategoryOffers(page, limit)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ClientResponse(http.StatusBadRequest,"failed to fetch category offers",nil,err.Error(),))
 		return
 	}
 
-	successRes := response.ClientResponse(http.StatusOK, "category offers fetched successfully", offers, nil)
-	c.JSON(http.StatusOK, successRes)
+	c.JSON(http.StatusOK, response.ClientResponse(http.StatusOK,"category offers fetched successfully",data,nil,))
 }
 
 func DeleteCategoryOffer(c *gin.Context) {
@@ -129,4 +131,59 @@ func GetReferralDetails(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.ClientResponse(http.StatusOK, "referral details fetched successfully", data, nil))
+}
+
+func UpdateProductOffer(c *gin.Context) {
+
+	offerID64, err := strconv.ParseUint(c.Param("id"),10,64,)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest,response.ClientResponse(http.StatusBadRequest,"invalid offer id",nil,err.Error()))
+		return
+	}
+
+	var req models.UpdateProductOfferRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest,response.ClientResponse(http.StatusBadRequest,"invalid request body",nil,err.Error()))
+		return
+	}
+
+	err = usecase.UpdateProductOffer(
+		uint(offerID64),
+		req,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest,response.ClientResponse(http.StatusBadRequest,"failed to update offer",nil,err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK,response.ClientResponse(http.StatusOK,"offer updated successfully",nil,nil))
+}
+
+func UpdateCategoryOffer(c *gin.Context) {
+
+	offerID64, err := strconv.ParseUint(c.Param("id"),10,64,)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest,response.ClientResponse(http.StatusBadRequest,"invalid offer id",nil,err.Error(),),)
+		return
+	}
+
+	var req models.UpdateCategoryOfferRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest,response.ClientResponse(http.StatusBadRequest,"invalid request body",nil,err.Error(),),)
+		return
+	}
+
+	err = usecase.UpdateCategoryOffer(uint(offerID64),req,)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest,response.ClientResponse(http.StatusBadRequest,"failed to update category offer",nil,err.Error(),),)
+		return
+	}
+
+	c.JSON(http.StatusOK,response.ClientResponse(http.StatusOK,"category offer updated successfully",nil,nil,),)
 }

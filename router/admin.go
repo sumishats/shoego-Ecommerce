@@ -39,10 +39,12 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		//offer
 		adminProtected.POST("/offers/product", handlers.CreateProductOffer)
 		adminProtected.GET("/offers/product", handlers.GetAllProductOffers)
+		adminProtected.PUT("/offers/:id", handlers.UpdateProductOffer)
 		adminProtected.DELETE("/offers/product/:id", handlers.DeleteProductOffer)
 
 		adminProtected.POST("/category-offers", handlers.CreateCategoryOffer)
 		adminProtected.GET("/category-offers", handlers.GetAllCategoryOffers)
+		adminProtected.PUT("/category-offers/:id", handlers.UpdateCategoryOffer)
 		adminProtected.DELETE("/category-offers/:id", handlers.DeleteCategoryOffer)
 	}
 	{

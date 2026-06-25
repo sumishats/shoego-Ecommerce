@@ -25,15 +25,18 @@ func GetProductOfferByProductID(productID uint) (*domain.ProductOffer, error) {
 	return &offer, nil
 }
 
-func GetAllProductOffers() ([]domain.ProductOffer, error) {
+func GetAllProductOffers(page, limit int) ([]domain.ProductOffer, int64, error) {
 
 	var offers []domain.ProductOffer
+	var totalCount int64
 
-	err := database.DB.
-		Preload("Product").
-		Find(&offers).Error
+	offset := (page - 1) * limit
 
-	return offers, err
+	database.DB.Model(&domain.ProductOffer{}).Count(&totalCount)
+
+	err := database.DB.Preload("Product").Limit(limit).Offset(offset).Find(&offers).Error
+
+	return offers, totalCount, err
 }
 func DeleteProductOffer(offerID uint) error {
 
@@ -69,13 +72,23 @@ func DeleteCategoryOffer(id uint) error {
 	return database.DB.Delete(&domain.CategoryOffer{}, id).Error
 }
 
-func GetAllCategoryOffers() ([]domain.CategoryOffer, error) {
+func GetAllCategoryOffers(page, limit int) ([]domain.CategoryOffer, int64, error) {
 
 	var offers []domain.CategoryOffer
+	var totalCount int64
 
-	err := database.DB.Preload("Category").Find(&offers).Error
+	offset := (page - 1) * limit
 
-	return offers, err
+	// count total records
+	err := database.DB.Model(&domain.CategoryOffer{}).Count(&totalCount).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// paginated fetch
+	err = database.DB.Preload("Category").Limit(limit).Offset(offset).Find(&offers).Error
+
+	return offers, totalCount, err
 }
 func GetActiveCategoryOffer(categoryID uint) (*domain.CategoryOffer, error) {
 
@@ -109,4 +122,34 @@ func GetUserByReferralCode(code string) (*domain.User, error) {
 	}
 
 	return &user, nil
+}
+func GetProductOfferByID(id uint) (*domain.ProductOffer, error) {
+
+	var offer domain.ProductOffer
+
+	err := database.DB.First(&offer, id).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &offer, nil
+}
+func UpdateProductOffer(offer *domain.ProductOffer) error {
+	return database.DB.Save(offer).Error
+}
+func GetCategoryOfferByID(id uint) (*domain.CategoryOffer, error) {
+
+	var offer domain.CategoryOffer
+
+	err := database.DB.First(&offer, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &offer, nil
+}
+func UpdateCategoryOffer(offer *domain.CategoryOffer) error {
+
+	return database.DB.Save(offer).Error
 }
