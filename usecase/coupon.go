@@ -229,7 +229,7 @@ func ApplyCoupon(userID uint, code string) (*models.CouponApplyResponse, error) 
 	}
 
 	if coupon.UsedCount >= coupon.UsageLimit {
-		return nil, errors.New("coupon limit reached")
+		return nil, errors.New("coupon usage limit reached")
 	}
 
 	if subtotal < coupon.MinimumAmount {
@@ -247,9 +247,12 @@ func ApplyCoupon(userID uint, code string) (*models.CouponApplyResponse, error) 
 	if discount > subtotal {
 		discount = subtotal
 	}
+	discount = math.Round(discount*100) / 100
 
-	final := subtotal - discount
-	err = repository.UpdateCartCoupon(userID,coupon.Code,discount,)
+	// Round final
+	final := math.Round((subtotal-discount)*100) / 100
+
+	err = repository.UpdateCartCoupon(userID, coupon.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +273,7 @@ func RemoveCoupon(userID uint) error {
 	}
 
 	cart.CouponCode = ""
-	cart.DiscountAmount = 0
+	
 
 	return repository.UpdateCart(cart)
 }

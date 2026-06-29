@@ -27,6 +27,12 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.PUT("/products/:id", handlers.EditProduct)
 		adminProtected.DELETE("/products/:id", handlers.DeleteProduct)
 		adminProtected.GET("/products", handlers.GetProducts)
+		//product variants
+		adminProtected.POST("/products/:id/variants", handlers.AddVariants)
+		adminProtected.GET("/products/:id/variants", handlers.GetVariants)
+		adminProtected.PUT("/variants/:id", handlers.EditVariant)
+		adminProtected.DELETE("/variants/:id", handlers.DeleteVariant)
+
 	}
 	{
 		//cateory management

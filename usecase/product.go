@@ -61,7 +61,7 @@ func AddProduct(req models.AddProductRequest, files []*multipart.FileHeader) err
 	return repository.CreateProductImages(images)
 }
 
-func EditProduct(productID uint,updates map[string]interface{},files []*multipart.FileHeader,) error {
+func EditProduct(productID uint, updates map[string]interface{}, files []*multipart.FileHeader) error {
 
 	product, err := repository.GetProductByID(productID)
 	if err != nil {
@@ -170,6 +170,75 @@ func GetProducts(pageStr, limitStr string) (*models.ProductListResponse, error) 
 		TotalCount: totalCount,
 		TotalPages: totalPages,
 	}, nil
+}
+
+// product variants
+func AddVariants(productID uint, req models.AddVariantsRequest) error {
+
+	if !repository.ProductExists(productID) {
+		return errors.New("product not found")
+	}
+
+	if len(req.Variants) == 0 {
+		return errors.New("variants required")
+	}
+
+	var variants []domain.ProductVariant
+
+	for _, v := range req.Variants {
+
+		if v.Size == "" {
+			return errors.New("size required")
+		}
+
+		if v.Stock < 0 {
+			return errors.New("invalid stock")
+		}
+
+		variants = append(variants, domain.ProductVariant{
+			ProductID: productID,
+			Size:      v.Size,
+			SKU:       v.SKU,
+			Stock:     v.Stock,
+		})
+	}
+
+	return repository.CreateProductVariants(variants)
+}
+func GetVariants(productID uint) ([]models.VariantResponse, error) {
+
+	variants, err := repository.GetVariantsByProductID(productID)
+	if err != nil {
+		return nil, err
+	}
+
+	var response []models.VariantResponse
+
+	for _, v := range variants {
+
+		response = append(response, models.VariantResponse{
+			ID:        v.ID,
+			ProductID: v.ProductID,
+			SKU:       v.SKU,
+			Stock:     v.Stock,
+		})
+	}
+
+	return response, nil
+}
+
+func EditVariant(variantID uint, data map[string]interface{}) error {
+
+	return repository.UpdateVariant(
+		variantID,
+		data,
+	)
+}
+func DeleteVariant(variantID uint) error {
+
+	return repository.DeleteVariant(
+		variantID,
+	)
 }
 
 //admin category managent
@@ -322,6 +391,17 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 	for _, img := range product.Images {
 		images = append(images, img.ImageURL)
 	}
+	var variants []models.UserVariantResponse
+
+	for _, v := range product.Variants {
+
+		variants = append(variants, models.UserVariantResponse{
+			ID:    v.ID,
+			Size:  v.Size,
+			SKU:   v.SKU,
+			Stock: v.Stock,
+		})
+	}
 
 	status := "available"
 	if product.Stock <= 0 {
@@ -439,8 +519,15 @@ func GetUserProductDetails(productID uint) (*models.UserProductDetailResponse, e
 		CategoryName:    product.Category.Name,
 		IsListed:        product.IsListed,
 		Images:          images,
+		Variants:        variants,
 		Status:          status,
-		Breadcrumbs:     []string{"Home", "Products", product.Category.Name, product.Name},
+		Breadcrumbs: []string{
+			"Home",
+			"Products",
+			product.Category.Name,
+			product.Name,
+		},
+
 		Highlights: []string{
 			"Comfortable for daily wear",
 			"Stylish design",

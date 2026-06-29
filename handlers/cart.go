@@ -41,7 +41,7 @@ func AddToCart(c *gin.Context) {
 		return
 	}
 
-	err := usecase.AddToCart(userID, req.ProductID)
+	err := usecase.AddToCart(userID,req.ProductID,req.VariantID,)
 	if err != nil {
 		errRes := response.ClientResponse(http.StatusBadRequest, "failed to add to cart", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)

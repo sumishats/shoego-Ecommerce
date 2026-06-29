@@ -42,6 +42,22 @@ type ProductListResponse struct {
 	TotalPages int               `json:"total_pages"`
 }
 
+// producr variants
+type VariantRequest struct {
+	Size  string  `json:"size"`
+	SKU   string  `json:"sku"`
+	Stock int     `json:"stock"`
+}
+type AddVariantsRequest struct {
+	Variants []VariantRequest `json:"variants"`
+}
+type VariantResponse struct {
+	ID        uint    `json:"id"`
+	ProductID uint    `json:"product_id"`
+	SKU       string  `json:"sku"`
+	Stock     int     `json:"stock"`
+}
+
 type AddCategory struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
@@ -111,16 +127,17 @@ type UserProductDetailResponse struct {
 	SKU         string  `json:"sku"`
 	Price       float64 `json:"price"`
 
-	DiscountedPrice float64               `json:"discounted_price"`
-	OfferPercentage float64               `json:"offer_percentage"`
-	OfferName       string                `json:"offer_name"`
-	Rating          float64               `json:"rating"`
-	
+	DiscountedPrice float64 `json:"discounted_price"`
+	OfferPercentage float64 `json:"offer_percentage"`
+	OfferName       string  `json:"offer_name"`
+	Rating          float64 `json:"rating"`
+
 	Stock           int                   `json:"stock"`
 	CategoryID      uint                  `json:"category_id"`
 	CategoryName    string                `json:"category_name"`
 	IsListed        bool                  `json:"is_listed"`
 	Images          []string              `json:"images"`
+	Variants        []UserVariantResponse `json:"variants"`
 	Status          string                `json:"status"`
 	Breadcrumbs     []string              `json:"breadcrumbs"`
 	Highlights      []string              `json:"highlights"`
@@ -137,4 +154,12 @@ type ReviewResponse struct {
 	UserName string  `json:"user_name"`
 	Comment  string  `json:"comment"`
 	Rating   float64 `json:"rating"`
+}
+
+// product variant
+type UserVariantResponse struct {
+	ID    uint   `json:"id"`
+	Size  string `json:"size"`
+	SKU   string `json:"sku"`
+	Stock int    `json:"stock"`
 }

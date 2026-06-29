@@ -1,8 +1,9 @@
 package models
 
-
-type CheckoutItemResponse struct{
+type CheckoutItemResponse struct {
 	ProductID uint    `json:"product_id"`
+	VariantID *uint    `json:"variant_id"`
+	Size      string  `json:"size"`
 	Name      string  `json:"name"`
 	Image     string  `json:"image"`
 	Quantity  int     `json:"quantity"`

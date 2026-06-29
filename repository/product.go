@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"shoego/database"
 	"shoego/domain"
 	"shoego/models"
@@ -36,6 +37,54 @@ func GetProducts(limit int, offset int) ([]domain.Product, error) {
 	}
 
 	return products, nil
+}
+
+// product variants
+func CreateProductVariants(variants []domain.ProductVariant) error {
+	return database.DB.Create(&variants).Error
+}
+
+func GetVariantsByProductID(productID uint) ([]domain.ProductVariant, error) {
+
+	var variants []domain.ProductVariant
+
+	err := database.DB.
+		Where("product_id = ?", productID).
+		Find(&variants).Error
+
+	return variants, err
+}
+func ProductExists(productID uint) bool {
+
+	var count int64
+
+	database.DB.Model(&domain.Product{}).Where("id = ?", productID).Count(&count)
+
+	return count > 0
+}
+func UpdateVariant(variantID uint, data map[string]interface{}) error {
+
+	result := database.DB.
+		Model(&domain.ProductVariant{}).
+		Where("id = ?", variantID).
+		Updates(data)
+
+	if result.RowsAffected == 0 {
+		return errors.New("variant not found")
+	}
+
+	return result.Error
+}
+func DeleteVariant(variantID uint) error {
+
+	result := database.DB.
+		Delete(&domain.ProductVariant{}, variantID)
+
+	if result.RowsAffected == 0 {
+		return errors.New("variant not found")
+	}
+
+	return result.Error
 }
 
 func CountProducts() (int64, error) {
@@ -122,9 +171,8 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 	var products []domain.Product
 	var totalCount int64
 
-	
-	db := database.DB.Model(&domain.Product{}).Preload("Images").Preload("ProductOffers"). Preload("Category.CategoryOffers").Joins("JOIN categories ON categories.id = products.category_id").
-	Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
+	db := database.DB.Model(&domain.Product{}).Preload("Images").Preload("ProductOffers").Preload("Category.CategoryOffers").Joins("JOIN categories ON categories.id = products.category_id").
+		Where("products.is_listed = ? AND categories.is_listed = ?", true, true)
 
 	if strings.TrimSpace(query.Search) != "" {
 		searchValue := "%" + strings.TrimSpace(query.Search) + "%"
@@ -147,7 +195,6 @@ func GetUserProducts(query models.UserProductQuery) ([]domain.Product, int64, er
 		db = db.Where("price <= ?", query.MaxPrice)
 	}
 
-	
 	switch query.Sort {
 	case "asc":
 		db = db.Order("products.id ASC")
@@ -183,9 +230,8 @@ func GetUserProductDetails(productID uint) (*domain.Product, error) {
 	//fetch  product details by id
 	var product domain.Product
 
-	err := database.DB.Model(&domain.Product{}).Preload("Images").Preload("Category").Joins("JOIN categories ON categories.id = products.category_id").
-		Where("products.id = ? AND products.is_listed = ? AND categories.is_listed = ?", productID, true, true).
-		First(&product).Error
+	err := database.DB.Model(&domain.Product{}).Preload("Images").Preload("Category").Preload("Variants").Joins("JOIN categories ON categories.id = products.category_id").Where(
+		"products.id = ? AND products.is_listed = ? AND categories.is_listed = ?", productID, true, true).First(&product).Error
 
 	if err != nil {
 		return nil, err
@@ -228,4 +274,18 @@ func GetUserCategories(search string) ([]domain.Category, error) {
 	}
 
 	return categories, nil
+}
+func GetVariantByID(id uint) (*domain.ProductVariant, error) {
+
+	var variant domain.ProductVariant
+
+	err := database.DB.
+		First(&variant, id).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &variant, nil
 }

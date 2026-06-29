@@ -52,22 +52,37 @@ func GetProductForCart(productID uint) (*domain.Product, error) {
 	return &product, nil
 }
 
-func GetCartItem(cartID, productID uint) (*domain.CartItem, error) {
+func GetCartItem(cartID, productID, variantID uint) (*domain.CartItem, error) {
+
 	var item domain.CartItem
-	err := database.DB.Where("cart_id = ? AND product_id = ?", cartID, productID).First(&item).Error
+
+	err := database.DB.
+		Where(
+			"cart_id = ? AND product_id = ? AND variant_id = ?",
+			cartID,
+			productID,
+			&variantID,
+		).
+		First(&item).Error
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &item, nil
 }
 
-func CreateCartItem(cartID, productID uint, quantity int) error {
+func CreateCartItem(cartID, productID, variantID uint, quantity int) error {
+
 	item := domain.CartItem{
 		CartID:    cartID,
 		ProductID: productID,
+		VariantID: &variantID,
 		Quantity:  quantity,
 	}
+
 	return database.DB.Create(&item).Error
+
 }
 
 func UpdateCartItemQuantity(cartItemID uint, quantity int) error {
@@ -81,8 +96,16 @@ func DeleteCartItem(cartID, productID uint) error {
 // fetch all cart items for user with product details
 func GetCartItemsByUserID(userID uint) ([]domain.CartItem, error) {
 	var items []domain.CartItem
-	err := database.DB.Model(&domain.CartItem{}).Joins("JOIN carts ON carts.id = cart_items.cart_id").Where("carts.user_id = ?", userID).Preload("Product").Preload("Product.Category").Preload("Product.Images").Find(&items).Error
-
+	// err := database.DB.Model(&domain.CartItem{}).Joins("JOIN carts ON carts.id = cart_items.cart_id").Where("carts.user_id = ?", userID).Preload("Product").Preload("Variant").Preload("Product.Category").Preload("Product.Images").Find(&items).Error
+	err := database.DB.
+		Model(&domain.CartItem{}).
+		Joins("JOIN carts ON carts.id = cart_items.cart_id").
+		Where("carts.user_id = ?", userID).
+		Preload("Product").
+		Preload("Variant").
+		Preload("Product.Category").
+		Preload("Product.Images").
+		Find(&items).Error
 	return items, err
 }
 
@@ -128,7 +151,6 @@ func ClearCartByUserID(userID uint) error {
 
 	return tx.Commit().Error
 }
-
 func GetCartSubtotal(userID uint) (float64, error) {
 
 	cartItems, err := GetCartItemsByUserID(userID)
@@ -144,30 +166,20 @@ func GetCartSubtotal(userID uint) (float64, error) {
 
 		bestOffer := 0.0
 
-		// Product Offer
-
+		// Product offer
 		productOffer, err := GetActiveProductOffer(item.ProductID)
-
 		if err == nil {
-
 			bestOffer = productOffer.DiscountPercentage
 		}
 
+		// Category offer
 		categoryOffer, err := GetActiveCategoryOffer(item.Product.CategoryID)
-
-		if err == nil {
-
-			if categoryOffer.DiscountPercentage > bestOffer {
-
-				bestOffer = categoryOffer.DiscountPercentage
-			}
+		if err == nil && categoryOffer.DiscountPercentage > bestOffer {
+			bestOffer = categoryOffer.DiscountPercentage
 		}
 
 		if bestOffer > 0 {
-
-			price =
-				item.Product.Price -
-					(item.Product.Price*bestOffer)/100
+			price = price - (price * bestOffer / 100)
 		}
 
 		subtotal += price * float64(item.Quantity)
@@ -175,7 +187,6 @@ func GetCartSubtotal(userID uint) (float64, error) {
 
 	return subtotal, nil
 }
-
 
 func UpdateCart(cart *domain.Cart) error {
 	fmt.Println("upadte db")

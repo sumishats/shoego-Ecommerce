@@ -72,10 +72,11 @@ func UpdateCoupon(coupon *domain.Coupon) error {
 func DeleteCoupon(id uint) error {
 	return database.DB.Delete(&domain.Coupon{}, id).Error
 }
-func UpdateCartCoupon(userID uint, code string, discount float64) error {
 
-	return database.DB.Model(&domain.Cart{}).Where("user_id = ?", userID).Updates(map[string]interface{}{
-		"coupon_code":     code,
-		"discount_amount": discount,
-	}).Error
+
+func UpdateCartCoupon(userID uint, code string) error {
+
+	return database.DB.Model(&domain.Cart{}).
+		Where("user_id = ?", userID).
+		Update("coupon_code", code).Error
 }

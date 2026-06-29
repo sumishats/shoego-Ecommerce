@@ -24,13 +24,15 @@ type Order struct {
 
 type OrderItem struct {
 	gorm.Model
-	OrderID            uint    `gorm:"not null"`
-	ProductID          uint    `gorm:"not null"`
-	Product            Product `gorm:"foreignKey:ProductID"`
-	Quantity           int     `gorm:"not null"`
-	Price              float64 `gorm:"not null"`
-	TotalPrice         float64 `gorm:"not null"`
-	ItemStatus         string  `gorm:"type:varchar(50);default:'placed'"`
-	CancellationReason string  `gorm:"type:text"`
-	ReturnReason       string  `gorm:"type:text"`
+	OrderID   uint
+	ProductID uint
+	Product   Product `gorm:"foreignKey:ProductID"`
+	VariantID *uint
+	Variant   ProductVariant `gorm:"foreignKey:VariantID"`
+	Quantity   int
+	Price      float64
+	TotalPrice float64
+	ItemStatus         string `gorm:"type:varchar(50);default:'placed'"`
+	CancellationReason string
+	ReturnReason       string
 }

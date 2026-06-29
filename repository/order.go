@@ -53,10 +53,11 @@ func GetAdminOrders(search, status, sortBy, date string, limit, offset int) ([]d
 }
 
 func GetOrderByID(orderID uint) (*domain.Order, error) {
+
 	var order domain.Order
 
-	err := database.DB.Preload("User").Preload("Address").Preload("OrderItems").Preload("OrderItems.Product").Preload("OrderItems.Product.Images").
-		First(&order, orderID).Error
+	err := database.DB.Preload("User").Preload("Address").Preload("OrderItems.Product").Preload("OrderItems.Product.Images").Preload("OrderItems.Variant").First(&order, orderID).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -65,52 +66,66 @@ func GetOrderByID(orderID uint) (*domain.Order, error) {
 }
 
 func UpdateOrderStatus(orderID uint, status string) error {
+
 	var order domain.Order
 
 	if err := database.DB.Preload("OrderItems").First(&order, orderID).Error; err != nil {
 		return err
 	}
-
+	
 	if status == "returned" {
 
-		// Stock return
 		for _, item := range order.OrderItems {
+		
+			if item.VariantID == nil {
 
-			var product domain.Product
+				var product domain.Product
 
-			if err := database.DB.First(&product, item.ProductID).Error; err != nil {
-				return err
-			}
+				if err := database.DB.First(&product, item.ProductID).Error; err != nil {
+					return err
+				}
 
-			product.Stock += item.Quantity
+				product.Stock += item.Quantity
 
-			if err := database.DB.Save(&product).Error; err != nil {
-				return err
+				if err := database.DB.Save(&product).Error; err != nil {
+					return err
+				}
+
+			} else {
+
+				var variant domain.ProductVariant
+
+				if err := database.DB.First(&variant, *item.VariantID).Error; err != nil {
+					return err
+				}
+
+				variant.Stock += item.Quantity
+
+				if err := database.DB.Save(&variant).Error; err != nil {
+					return err
+				}
 			}
 		}
-
-		// NEW CODE START
-		err := database.DB.Model(&domain.OrderItem{}).
-			Where("order_id = ? AND item_status = ?", order.ID, "return_requested").
-			Update("item_status", "returned").Error
-
-		if err != nil {
+		if err := database.DB.Model(&domain.OrderItem{}).Where("order_id = ? AND item_status = ?", order.ID, "return_requested").Update("item_status", "returned").Error; err != nil {
 			return err
 		}
-
 	}
 
 	updates := map[string]interface{}{
 		"order_status": status,
 	}
 
-	if order.PaymentMethod == "cod" {
+	switch order.PaymentMethod {
+
+	case "cod":
+
 		switch status {
-		case "delivered":
-			updates["payment_status"] = "paid"
 
 		case "pending", "shipped", "out_for_delivery":
 			updates["payment_status"] = "pending"
+
+		case "delivered":
+			updates["payment_status"] = "paid"
 
 		case "cancelled":
 			updates["payment_status"] = "cancelled"
@@ -118,11 +133,26 @@ func UpdateOrderStatus(orderID uint, status string) error {
 		case "returned":
 			updates["payment_status"] = "refunded"
 		}
-	}
 
-	return database.DB.Model(&domain.Order{}).
-		Where("id = ?", orderID).
-		Updates(updates).Error
+	case "razorpay", "wallet":
+
+		switch status {
+
+		case "pending":
+			updates["payment_status"] = "pending"
+
+		case "delivered":
+			updates["payment_status"] = "paid"
+
+		case "cancelled":
+			updates["payment_status"] = "refunded"
+
+		case "returned":
+			updates["payment_status"] = "refunded"
+		}
+
+	}
+	return database.DB.Model(&domain.Order{}).Where("id = ?", orderID).Updates(updates).Error
 }
 
 // inventory admin
@@ -192,15 +222,18 @@ func GetUserOrders(userID uint, search string, limit, offset int) ([]domain.Orde
 	return orders, err
 }
 
-//	func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
-//		var order domain.Order
-//		err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where(" user_id AND order_id = ?", order.UserID, orderID).First(&order).Error
-//		return order, err
-//	}
 func GetOrderByOrderID(userID uint, orderID string) (domain.Order, error) {
 	var order domain.Order
 
-	err := database.DB.Preload("OrderItems.Product.Images").Preload("Address").Where("user_id = ? AND order_id = ?", userID, orderID).First(&order).Error
+	err := database.DB.
+		Preload("Address").
+		Preload("OrderItems").
+		Preload("OrderItems.Product").
+		Preload("OrderItems.Product.Images").
+		Preload("OrderItems.Variant").
+		Where("user_id = ? AND order_id = ?", userID, orderID).
+		First(&order).Error
+
 	return order, err
 }
 
