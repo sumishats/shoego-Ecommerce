@@ -69,10 +69,11 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 			image = product.Images[0].ImageURL
 		}
 
-		discountedPrice := product.Price
+		price := product.Price
+
+		discountedPrice := price
 
 		offerPercentage := 0.0
-
 
 		productOffer, err := repository.GetActiveProductOffer(product.ID)
 
@@ -82,33 +83,36 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 		}
 
 		categoryOffer, err := repository.GetActiveCategoryOffer(product.CategoryID)
-
-		if err == nil {
-
-			if categoryOffer.DiscountPercentage > offerPercentage {
-
-				offerPercentage = categoryOffer.DiscountPercentage
-			}
+		if err == nil && categoryOffer.DiscountPercentage > offerPercentage {
+			offerPercentage = categoryOffer.DiscountPercentage
 		}
-
 
 		if offerPercentage > 0 {
-
-			discountedPrice =product.Price -(product.Price*offerPercentage)/100
+			discountedPrice = price - (price*offerPercentage)/100
 		}
 
+		itemTotal := discountedPrice * float64(item.Quantity)
+
+		discountedPrice = math.Round(discountedPrice*100) / 100
+		itemTotal = math.Round(itemTotal*100) / 100
+
+		size := ""
+
+		if item.VariantID != nil {
+			size = item.Variant.Size
+		}
 		items = append(items, models.CheckoutItemResponse{
 			ProductID: product.ID,
+			VariantID: item.VariantID,
+			Size:      size,
 			Name:      product.Name,
 			Image:     image,
 			Quantity:  item.Quantity,
 			Price:     discountedPrice,
 			ItemTotal: discountedPrice * float64(item.Quantity),
 		})
-
 	}
 
-	
 	cart, err := repository.GetCartByUserID(userID)
 	if err != nil {
 		return nil, err
@@ -121,19 +125,33 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 
 	tax := math.Round((subtotal*0.05)*100) / 100
 
-	
 	shipping := 50.0
 	if subtotal >= 1000 {
 		shipping = 0
 	}
-
-	
 	couponCode := ""
 	couponDiscount := 0.0
 
-	if cart != nil {
+	if cart != nil && cart.CouponCode != "" {
+
 		couponCode = cart.CouponCode
-		couponDiscount = cart.DiscountAmount
+
+		coupon, err := repository.GetCouponByCode(cart.CouponCode)
+		if err == nil && coupon != nil {
+
+			if coupon.DiscountType == "percentage" {
+
+				couponDiscount = subtotal * coupon.DiscountAmount / 100
+
+			} else {
+
+				couponDiscount = coupon.DiscountAmount
+			}
+
+			if couponDiscount > subtotal {
+				couponDiscount = subtotal
+			}
+		}
 	}
 
 	finalAmount := math.Round((subtotal+tax+shipping-couponDiscount)*100) / 100
@@ -149,7 +167,6 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 		FinalAmount:    finalAmount,
 	}, nil
 }
-
 
 func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
 	if req.PaymentMethod != "cod" {
@@ -189,14 +206,39 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 	var orderItems []domain.OrderItem
 
 	for _, item := range cartItems {
-		product := item.Product
+
+		price := item.Product.Price
+
+		bestOffer := 0.0
+
+		productOffer, err := repository.GetActiveProductOffer(item.ProductID)
+		if err == nil {
+			bestOffer = productOffer.DiscountPercentage
+		}
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(item.Product.CategoryID)
+		if err == nil && categoryOffer.DiscountPercentage > bestOffer {
+			bestOffer = categoryOffer.DiscountPercentage
+		}
+
+		if bestOffer > 0 {
+			price = price - (price*bestOffer)/100
+		}
+
+		var variantID *uint
+
+		if item.VariantID != nil {
+			variantID = item.VariantID
+		}
 
 		orderItems = append(orderItems, domain.OrderItem{
-			ProductID:  product.ID,
+			ProductID:  item.ProductID,
+			VariantID:  variantID,
 			Quantity:   item.Quantity,
-			Price:      product.Price,
-			TotalPrice: product.Price * float64(item.Quantity),
+			Price:      price,
+			TotalPrice: price * float64(item.Quantity),
 		})
+		
 	}
 
 	if err := repository.CreateOrderTransaction(order, orderItems, userID); err != nil {
@@ -250,12 +292,31 @@ func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceO
 	var orderItems []domain.OrderItem
 
 	for _, item := range cartItems {
-		product := item.Product
+
+		price := item.Product.Price
+
+		bestOffer := 0.0
+
+		productOffer, err := repository.GetActiveProductOffer(item.ProductID)
+		if err == nil {
+			bestOffer = productOffer.DiscountPercentage
+		}
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(item.Product.CategoryID)
+		if err == nil && categoryOffer.DiscountPercentage > bestOffer {
+			bestOffer = categoryOffer.DiscountPercentage
+		}
+
+		if bestOffer > 0 {
+			price = price - (price*bestOffer)/100
+		}
+
 		orderItems = append(orderItems, domain.OrderItem{
-			ProductID:  product.ID,
+			ProductID:  item.ProductID,
+			VariantID:  item.VariantID,
 			Quantity:   item.Quantity,
-			Price:      product.Price,
-			TotalPrice: product.Price * float64(item.Quantity),
+			Price:      price,
+			TotalPrice: price * float64(item.Quantity),
 		})
 	}
 	err = repository.CreateOrderTransaction(order, orderItems, userID)

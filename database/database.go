@@ -31,6 +31,7 @@ func ConnectDatabase(cfg config.Config) (*gorm.DB, error) {
 	DB.AutoMigrate(&domain.OTPVerification{})
 	DB.AutoMigrate(&domain.Address{})
 	DB.AutoMigrate(&domain.Product{})
+	DB.AutoMigrate(&domain.ProductVariant{})
 	DB.AutoMigrate(&domain.ProductImage{})
 	DB.AutoMigrate(&domain.Category{})
 	DB.AutoMigrate(&domain.BlacklistToken{})

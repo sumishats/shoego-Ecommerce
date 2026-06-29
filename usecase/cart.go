@@ -10,7 +10,8 @@ import (
 
 const MaxCartQuantityPerProduct = 5
 
-func AddToCart(userID, productID uint) error {
+func AddToCart(userID uint, productID uint, variantID uint) error {
+
 	product, err := repository.GetProductForCart(productID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -27,8 +28,17 @@ func AddToCart(userID, productID uint) error {
 		return errors.New("category is unavailable")
 	}
 
-	if product.Stock <= 0 {
-		return errors.New("product is out of stock")
+	variant, err := repository.GetVariantByID(variantID)
+	if err != nil {
+		return errors.New("variant not found")
+	}
+
+	if variant.ProductID != productID {
+		return errors.New("invalid variant")
+	}
+
+	if variant.Stock <= 0 {
+		return errors.New("variant out of stock")
 	}
 
 	cart, err := repository.GetOrCreateCart(userID)
@@ -36,11 +46,17 @@ func AddToCart(userID, productID uint) error {
 		return err
 	}
 
-	item, err := repository.GetCartItem(cart.ID, productID)
+	item, err := repository.GetCartItem(
+		cart.ID,
+		productID,
+		variantID,
+	)
+
 	if err == nil {
+
 		newQty := item.Quantity + 1
 
-		if newQty > product.Stock {
+		if newQty > variant.Stock {
 			return errors.New("cannot add more than available stock")
 		}
 
@@ -48,12 +64,19 @@ func AddToCart(userID, productID uint) error {
 			return errors.New("maximum quantity limit reached")
 		}
 
-		err = repository.UpdateCartItemQuantity(item.ID, newQty)
+		err = repository.UpdateCartItemQuantity(
+			item.ID,
+			newQty,
+		)
+
 		if err != nil {
 			return err
 		}
 
-		_ = repository.RemoveProductFromWishlist(userID, productID)
+		_ = repository.RemoveProductFromWishlist(
+			userID,
+			productID,
+		)
 
 		return nil
 	}
@@ -62,17 +85,26 @@ func AddToCart(userID, productID uint) error {
 		return err
 	}
 
-	err = repository.CreateCartItem(cart.ID, productID, 1)
+	err = repository.CreateCartItem(
+		cart.ID,
+		productID,
+		variantID,
+		1,
+	)
+
 	if err != nil {
 		return err
 	}
 
-	_ = repository.RemoveProductFromWishlist(userID, productID)
+	_ = repository.RemoveProductFromWishlist(
+		userID,
+		productID,
+	)
 
 	return nil
 }
-
 func GetCart(userID uint) (*models.CartResponse, error) {
+
 	items, err := repository.GetCartItemsByUserID(userID)
 	if err != nil {
 		return nil, err
@@ -85,21 +117,35 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 	}
 
 	for _, item := range items {
-		product := item.Product
 
+		product := item.Product
 		status := "available"
 		isAvailable := true
 
+		stock := product.Stock
+
+		// If this cart item has a variant, use variant stock instead
+		if item.VariantID != nil {
+			stock = item.Variant.Stock
+		}
+
 		if !product.IsListed {
+
 			status = "product unavailable"
 			isAvailable = false
+
 		} else if !product.Category.IsListed {
+
 			status = "category unavailable"
 			isAvailable = false
-		} else if product.Stock <= 0 {
+
+		} else if stock <= 0 {
+
 			status = "out of stock"
 			isAvailable = false
-		} else if item.Quantity > product.Stock {
+
+		} else if item.Quantity > stock {
+
 			status = "quantity exceeds stock"
 			isAvailable = false
 		}
@@ -109,6 +155,7 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 		}
 
 		var images []string
+
 		for _, img := range product.Images {
 			images = append(images, img.ImageURL)
 		}
@@ -118,11 +165,9 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 		offerPercentage := 0.0
 		offerName := ""
 
-		// Product Offer
 		productOffer, err := repository.GetActiveProductOffer(product.ID)
 
 		if err == nil {
-
 			offerPercentage = productOffer.DiscountPercentage
 			offerName = productOffer.OfferName
 		}
@@ -139,25 +184,31 @@ func GetCart(userID uint) (*models.CartResponse, error) {
 		}
 
 		if offerPercentage > 0 {
-
-			discountedPrice =product.Price -(product.Price*offerPercentage)/100
+			discountedPrice = product.Price - (product.Price*offerPercentage)/100
 		}
 
-	
-		subtotal := float64(item.Quantity) * discountedPrice
+		subtotal := discountedPrice * float64(item.Quantity)
+
 		if isAvailable {
 			resp.TotalAmount += subtotal
+		}
+		size := ""
+
+		if item.VariantID != nil {
+			size = item.Variant.Size
 		}
 
 		resp.Items = append(resp.Items, models.CartItemResponse{
 			ProductID:       product.ID,
+			VariantID:       item.VariantID,
+			Size:            size,
 			Name:            product.Name,
 			Price:           product.Price,
 			DiscountedPrice: discountedPrice,
 			OfferPercentage: offerPercentage,
 			OfferName:       offerName,
 			Quantity:        item.Quantity,
-			Stock:           product.Stock,
+			Stock:           item.Variant.Stock,
 			CategoryName:    product.Category.Name,
 			Images:          images,
 			Subtotal:        subtotal,

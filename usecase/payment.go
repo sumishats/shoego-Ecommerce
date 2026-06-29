@@ -17,25 +17,24 @@ import (
 
 func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*models.CreateRazorpayOrderResponse, error) {
 
-	
 	_, err := repository.GetAddressByIDAndUserID(req.AddressID, userID)
 	if err != nil {
-		
+
 		return nil, err
 	}
-	
+
 	checkout, err := GetCheckoutPage(userID)
 	if err != nil {
-		
+
 		return nil, err
 	}
-	
+
 	cartItems, err := repository.GetCartItemsForCheckout(userID)
 	if err != nil {
-		
+
 		return nil, err
 	}
-	
+
 	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
 
 	order := &domain.Order{
@@ -56,13 +55,37 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 
 	for _, item := range cartItems {
 
+		price := item.Product.Price
+
+		bestOffer := 0.0
+
+		productOffer, err := repository.GetActiveProductOffer(item.ProductID)
+		if err == nil {
+			bestOffer = productOffer.DiscountPercentage
+		}
+
+		categoryOffer, err := repository.GetActiveCategoryOffer(item.Product.CategoryID)
+		if err == nil && categoryOffer.DiscountPercentage > bestOffer {
+			bestOffer = categoryOffer.DiscountPercentage
+		}
+
+		if bestOffer > 0 {
+			price = price - (price*bestOffer)/100
+		}
+
+		var variantID *uint
+
+		if item.VariantID != nil {
+			variantID = item.VariantID
+		}
+
 		orderItems = append(orderItems, domain.OrderItem{
 			ProductID:  item.Product.ID,
+			VariantID:  variantID,
 			Quantity:   item.Quantity,
 			Price:      item.Product.Price,
 			TotalPrice: item.Product.Price * float64(item.Quantity),
-		},
-		)
+		})
 	}
 
 	payment := &domain.Payment{
@@ -71,7 +94,7 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		PaymentMethod: "razorpay",
 		Status:        "pending",
 	}
-	
+
 	err = repository.CreatePendingOrderTransaction(order, orderItems, payment)
 	if err != nil {
 		return nil, err
@@ -84,7 +107,7 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		"currency": "INR",
 		"receipt":  order.OrderID,
 	}
-	
+
 	body, err := config.RazorpayClient.Order.Create(data, nil)
 	if err != nil {
 		return nil, err
@@ -100,9 +123,9 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 	return &models.CreateRazorpayOrderResponse{
 		OrderID:         order.OrderID,
 		RazorpayOrderID: razorpayOrderID,
-		Currency:    "INR",
-		Key:         config.AppConfig.RAZORPAY_KEY_ID,
-		FinalAmount: checkout.FinalAmount,
+		Currency:        "INR",
+		Key:             config.AppConfig.RAZORPAY_KEY_ID,
+		FinalAmount:     checkout.FinalAmount,
 	}, nil
 }
 
@@ -141,7 +164,7 @@ func VerifyPayment(req models.VerifyPaymentRequest) error {
 	if err != nil {
 		return err
 	}
-	
+
 	err = repository.ReduceStockAfterPayment(payment.OrderID)
 	if err != nil {
 		return err

@@ -80,7 +80,7 @@ func EditProduct(c *gin.Context) {
 
 	productID64, err := strconv.ParseUint(idParam, 10, 64)
 	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest,"invalid product id",nil,err.Error(),)
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid product id", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
@@ -101,10 +101,10 @@ func EditProduct(c *gin.Context) {
 
 	if priceStr := c.PostForm("price"); priceStr != "" {
 
-		//form data covert string 
+		//form data covert string
 		price, err := strconv.ParseFloat(priceStr, 64)
 		if err != nil {
-			errRes := response.ClientResponse(http.StatusBadRequest,"invalid price",nil,err.Error(),)
+			errRes := response.ClientResponse(http.StatusBadRequest, "invalid price", nil, err.Error())
 			c.JSON(http.StatusBadRequest, errRes)
 			return
 		}
@@ -116,7 +116,7 @@ func EditProduct(c *gin.Context) {
 
 		stock, err := strconv.Atoi(stockStr)
 		if err != nil {
-			errRes := response.ClientResponse(http.StatusBadRequest,"invalid stock",nil,err.Error(),)
+			errRes := response.ClientResponse(http.StatusBadRequest, "invalid stock", nil, err.Error())
 			c.JSON(http.StatusBadRequest, errRes)
 			return
 		}
@@ -128,7 +128,7 @@ func EditProduct(c *gin.Context) {
 
 		brandID, err := strconv.ParseUint(brandStr, 10, 64)
 		if err != nil {
-			errRes := response.ClientResponse(http.StatusBadRequest,"invalid brand id",nil,err.Error(),)
+			errRes := response.ClientResponse(http.StatusBadRequest, "invalid brand id", nil, err.Error())
 			c.JSON(http.StatusBadRequest, errRes)
 			return
 		}
@@ -140,7 +140,7 @@ func EditProduct(c *gin.Context) {
 
 		categoryID, err := strconv.ParseUint(categoryStr, 10, 64)
 		if err != nil {
-			errRes := response.ClientResponse(http.StatusBadRequest,"invalid category id",nil,err.Error(),)
+			errRes := response.ClientResponse(http.StatusBadRequest, "invalid category id", nil, err.Error())
 			c.JSON(http.StatusBadRequest, errRes)
 			return
 		}
@@ -157,7 +157,7 @@ func EditProduct(c *gin.Context) {
 
 	err = usecase.EditProduct(uint(productID64), updates, files)
 	if err != nil {
-		errRes := response.ClientResponse(http.StatusBadRequest,"failed to edit product",nil,err.Error(),)
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to edit product", nil, err.Error())
 		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
@@ -198,6 +198,123 @@ func GetProducts(c *gin.Context) {
 	}
 
 	successRes := response.ClientResponse(http.StatusOK, "products fetched successfully", data, nil)
+	c.JSON(http.StatusOK, successRes)
+}
+
+// product variants
+func AddVariants(c *gin.Context) {
+
+	productID64, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid product id", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	var req models.AddVariantsRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid request", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	err = usecase.AddVariants(uint(productID64), req)
+
+	if err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to add variants", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK, "variants added successfully", nil, nil)
+	c.JSON(http.StatusOK, successRes)
+}
+func GetVariants(c *gin.Context) {
+
+	productID64, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid product id", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	variants, err := usecase.GetVariants(uint(productID64))
+
+	if err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to fetch variants", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK, "variants fetched successfully", variants, nil)
+	c.JSON(http.StatusOK, successRes)
+}
+
+func EditVariant(c *gin.Context) {
+
+	variantID64, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid variant id", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	var req models.VariantRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid request", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	updates := map[string]interface{}{
+		"size":  req.Size,
+		"sku":   req.SKU,
+		"stock": req.Stock,
+	}
+
+	err = usecase.EditVariant(uint(variantID64), updates)
+
+	if err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to update variant", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK, "variant updated successfully", nil, nil)
+	c.JSON(http.StatusOK, successRes)
+}
+func DeleteVariant(c *gin.Context) {
+
+	variantID64, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "invalid variant id", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	err = usecase.DeleteVariant(uint(variantID64))
+
+	if err != nil {
+
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to delete variant", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK, "variant deleted successfully", nil, nil)
 	c.JSON(http.StatusOK, successRes)
 }
 

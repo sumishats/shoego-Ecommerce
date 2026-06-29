@@ -65,12 +65,20 @@ func GetAdminOrderDetail(orderID uint) (*models.AdminOrderDetailResponse, error)
 		if len(item.Product.Images) > 0 {
 			image = item.Product.Images[0].ImageURL
 		}
+
+		size := ""
+
+		if item.VariantID != nil {
+			size = item.Variant.Size
+		}
 		items = append(items, models.AdminOrderItemResponse{
 			ProductID:   item.ProductID,
+			VariantID:   item.VariantID,
+			Size:        size,
 			ProductName: item.Product.Name,
 			Quantity:    item.Quantity,
 			Price:       item.Price,
-			Subtotal:    float64(item.Quantity) * item.Price,
+			Subtotal:    item.TotalPrice,
 			Image:       image,
 		})
 	}
@@ -125,15 +133,15 @@ func ChangeOrderStatus(orderID uint, status string) error {
 		if err != nil {
 			return err
 		}
-	
-		if order.OrderStatus != "returned" {
-	
+
+		if order.PaymentStatus != "refunded" {
+
 			err = CreditWallet(
 				order.UserID,
 				order.FinalAmount,
-				"Return refund",
+				"Order return refund",
 			)
-	
+
 			if err != nil {
 				return err
 			}
@@ -234,9 +242,17 @@ func GetUserOrderDetail(userID uint, orderID string) (*models.OrderDetailRespons
 			image = item.Product.Images[0].ImageURL
 		}
 
+		size := ""
+
+		if item.VariantID != nil {
+			size = item.Variant.Size
+		}
+
 		items = append(items, models.OrderItemResponse{
 			ItemID:      item.ID,
 			ProductID:   item.ProductID,
+			VariantID:   item.VariantID,
+			Size:        size,
 			ProductName: item.Product.Name,
 			Image:       image,
 			Quantity:    item.Quantity,
@@ -401,16 +417,6 @@ func ReturnOrder(userID uint, orderID, reason string) error {
 
 		item.ItemStatus = "return_requested"
 		item.ReturnReason = reason
-		// err := repository.IncrementProductStock(
-		// 	item.ProductID,
-		// 	item.Quantity,
-		// )
-		// if err != nil {
-		// 	return err
-		// }
-
-		// item.ItemStatus = "returned"
-		// item.ReturnReason = reason
 
 		if err := repository.UpdateOrderItem(item); err != nil {
 			return err
@@ -452,17 +458,6 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 
 	item.ItemStatus = "return_requested"
 	item.ReturnReason = reason
-
-	// err = repository.IncrementProductStock(
-	// 	item.ProductID,
-	// 	item.Quantity,
-	// )
-	// if err != nil {
-	// 	return err
-	// }
-
-	// item.ItemStatus = "returned"
-	// item.ReturnReason = reason
 
 	if err := repository.UpdateOrderItem(&item); err != nil {
 		return err

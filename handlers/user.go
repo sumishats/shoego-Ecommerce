@@ -84,12 +84,12 @@ func UserLoginWithPassword(c *gin.Context) {
 	if errors.Is(err, models.ErrEmailNotFound) {
 
 		erres := response.ClientResponse(http.StatusBadRequest, "invalid email", nil, err.Error())
-		c.JSON(http.StatusBadGateway, erres)
+		c.JSON(http.StatusBadRequest, erres)
 		return
 	}
 	if err != nil {
 
-		erres := response.ClientResponse(500, "server error from usecase", nil, err.Error())
+		erres := response.ClientResponse(502, "server error from usecase", nil, err.Error())
 		c.JSON(http.StatusBadGateway, erres)
 		return
 	}

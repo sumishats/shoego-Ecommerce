@@ -15,12 +15,23 @@ type Product struct {
 	IsListed      bool
 	Images        []ProductImage `gorm:"foreignKey:ProductID"`
 	ProductOffers []ProductOffer `gorm:"foreignKey:ProductID"`
+	Variants []ProductVariant `gorm:"foreignKey:ProductID"`
 }
 
 type ProductImage struct {
 	gorm.Model
 	ProductID uint
 	ImageURL  string
+}
+
+type ProductVariant struct {
+	gorm.Model
+
+	ProductID uint
+	Size string
+	SKU string
+	Stock int
+	Product Product `gorm:"foreignKey:ProductID"`
 }
 
 type Category struct {
