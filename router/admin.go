@@ -70,6 +70,12 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		adminProtected.DELETE("/coupons/:id", handlers.DeleteCoupon)
 	}
 	{
+		//sales report
+		adminProtected.GET("/sales-report", handlers.GetSalesReport)
+		adminProtected.GET("/sales-report/pdf", handlers.DownloadSalesReportPDF)
+		
+	}
+	{
 		//admin logout
 		adminProtected.POST("/logout", handlers.AdminLogout)
 
