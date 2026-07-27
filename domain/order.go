@@ -13,6 +13,7 @@ type Order struct {
 	PaymentMethod      string  `gorm:"type:varchar(50)"`
 	PaymentStatus      string  `gorm:"type:varchar(50);default:'pending'"`
 	Subtotal           float64
+	OfferDiscount      float64
 	TaxAmount          float64
 	CouponDiscount     float64
 	ShippingCharge     float64
@@ -24,14 +25,14 @@ type Order struct {
 
 type OrderItem struct {
 	gorm.Model
-	OrderID   uint
-	ProductID uint
-	Product   Product `gorm:"foreignKey:ProductID"`
-	VariantID *uint
-	Variant   ProductVariant `gorm:"foreignKey:VariantID"`
-	Quantity   int
-	Price      float64
-	TotalPrice float64
+	OrderID            uint
+	ProductID          uint
+	Product            Product `gorm:"foreignKey:ProductID"`
+	VariantID          *uint
+	Variant            ProductVariant `gorm:"foreignKey:VariantID"`
+	Quantity           int
+	Price              float64
+	TotalPrice         float64
 	ItemStatus         string `gorm:"type:varchar(50);default:'placed'"`
 	CancellationReason string
 	ReturnReason       string

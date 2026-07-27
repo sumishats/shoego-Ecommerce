@@ -168,7 +168,91 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 	}, nil
 }
 
+// func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
+// 	if req.PaymentMethod != "cod" {
+// 		return nil, errors.New("only Cash on Delivery is available now")
+// 	}
+
+// 	_, err := repository.GetAddressByIDAndUserID(req.AddressID, userID)
+// 	if err != nil {
+// 		return nil, errors.New("address not found")
+// 	}
+
+// 	checkout, err := GetCheckoutPage(userID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	cartItems, err := repository.GetCartItemsForCheckout(userID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
+
+// 	order := &domain.Order{
+// 		OrderID:        orderID,
+// 		UserID:         userID,
+// 		AddressID:      req.AddressID,
+// 		OrderStatus:    "placed",
+// 		PaymentMethod:  "cod",
+// 		Subtotal:       checkout.Subtotal,
+// 		TaxAmount:      checkout.TaxAmount,
+// 		CouponDiscount: checkout.CouponDiscount,
+// 		ShippingCharge: checkout.ShippingCharge,
+// 		FinalAmount:    checkout.FinalAmount,
+// 	}
+
+// 	var orderItems []domain.OrderItem
+
+// 	for _, item := range cartItems {
+
+// 		price := item.Product.Price
+
+// 		bestOffer := 0.0
+
+// 		productOffer, err := repository.GetActiveProductOffer(item.ProductID)
+// 		if err == nil {
+// 			bestOffer = productOffer.DiscountPercentage
+// 		}
+
+// 		categoryOffer, err := repository.GetActiveCategoryOffer(item.Product.CategoryID)
+// 		if err == nil && categoryOffer.DiscountPercentage > bestOffer {
+// 			bestOffer = categoryOffer.DiscountPercentage
+// 		}
+
+// 		if bestOffer > 0 {
+// 			price = price - (price*bestOffer)/100
+// 		}
+
+// 		var variantID *uint
+
+// 		if item.VariantID != nil {
+// 			variantID = item.VariantID
+// 		}
+
+// 		orderItems = append(orderItems, domain.OrderItem{
+// 			ProductID:  item.ProductID,
+// 			VariantID:  variantID,
+// 			Quantity:   item.Quantity,
+// 			Price:      price,
+// 			TotalPrice: price * float64(item.Quantity),
+// 		})
+
+// 	}
+
+// 	if err := repository.CreateOrderTransaction(order, orderItems, userID); err != nil {
+// 		return nil, err
+// 	}
+
+//		return &models.PlaceOrderResponse{
+//			OrderID:     orderID,
+//			Message:     "order placed successfully",
+//			FinalAmount: checkout.FinalAmount,
+//		}, nil
+//	}
 func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
+
 	if req.PaymentMethod != "cod" {
 		return nil, errors.New("only Cash on Delivery is available now")
 	}
@@ -190,24 +274,15 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 
 	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
 
-	order := &domain.Order{
-		OrderID:        orderID,
-		UserID:         userID,
-		AddressID:      req.AddressID,
-		OrderStatus:    "placed",
-		PaymentMethod:  "cod",
-		Subtotal:       checkout.Subtotal,
-		TaxAmount:      checkout.TaxAmount,
-		CouponDiscount: checkout.CouponDiscount,
-		ShippingCharge: checkout.ShippingCharge,
-		FinalAmount:    checkout.FinalAmount,
-	}
-
+	
 	var orderItems []domain.OrderItem
+	var totalOfferDiscount float64
 
 	for _, item := range cartItems {
 
-		price := item.Product.Price
+		
+		originalPrice := item.Product.Price
+		price := originalPrice
 
 		bestOffer := 0.0
 
@@ -222,7 +297,12 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 		}
 
 		if bestOffer > 0 {
-			price = price - (price*bestOffer)/100
+
+			offerAmountPerItem := originalPrice * bestOffer / 100
+
+			totalOfferDiscount += offerAmountPerItem * float64(item.Quantity)
+
+			price = originalPrice - offerAmountPerItem
 		}
 
 		var variantID *uint
@@ -238,7 +318,20 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 			Price:      price,
 			TotalPrice: price * float64(item.Quantity),
 		})
-		
+	}
+
+	order := &domain.Order{
+		OrderID:        orderID,
+		UserID:         userID,
+		AddressID:      req.AddressID,
+		OrderStatus:    "placed",
+		PaymentMethod:  "cod",
+		Subtotal:       checkout.Subtotal,
+		OfferDiscount:  totalOfferDiscount, 
+		TaxAmount:      checkout.TaxAmount,
+		CouponDiscount: checkout.CouponDiscount,
+		ShippingCharge: checkout.ShippingCharge,
+		FinalAmount:    checkout.FinalAmount,
 	}
 
 	if err := repository.CreateOrderTransaction(order, orderItems, userID); err != nil {
@@ -252,48 +345,45 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 	}, nil
 }
 func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
+
 	if req.PaymentMethod != "wallet" {
 		return nil, errors.New("invalid payment method")
 	}
+
 	_, err := repository.GetAddressByIDAndUserID(req.AddressID, userID)
 	if err != nil {
 		return nil, errors.New("address not found")
 	}
+
 	checkout, err := GetCheckoutPage(userID)
 	if err != nil {
 		return nil, err
 	}
+
 	wallet, err := repository.GetWalletByUserID(userID)
 	if err != nil {
 		return nil, errors.New("wallet not found")
 	}
+
 	if wallet.Balance < checkout.FinalAmount {
 		return nil, errors.New("insufficient wallet balance")
 	}
+
 	cartItems, err := repository.GetCartItemsForCheckout(userID)
 	if err != nil {
 		return nil, err
 	}
-	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
-	order := &domain.Order{
-		OrderID:       orderID,
-		UserID:        userID,
-		AddressID:     req.AddressID,
-		OrderStatus:   "placed",
-		PaymentMethod: "wallet",
 
-		PaymentStatus:  "paid",
-		Subtotal:       checkout.Subtotal,
-		TaxAmount:      checkout.TaxAmount,
-		CouponDiscount: checkout.CouponDiscount,
-		ShippingCharge: checkout.ShippingCharge,
-		FinalAmount:    checkout.FinalAmount,
-	}
+	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
+
 	var orderItems []domain.OrderItem
+	var totalOfferDiscount float64
 
 	for _, item := range cartItems {
 
-		price := item.Product.Price
+
+		originalPrice := item.Product.Price
+		price := originalPrice
 
 		bestOffer := 0.0
 
@@ -308,7 +398,12 @@ func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceO
 		}
 
 		if bestOffer > 0 {
-			price = price - (price*bestOffer)/100
+
+			offerAmountPerItem := originalPrice * bestOffer / 100
+
+			totalOfferDiscount += offerAmountPerItem * float64(item.Quantity)
+
+			price = originalPrice - offerAmountPerItem
 		}
 
 		orderItems = append(orderItems, domain.OrderItem{
@@ -319,32 +414,146 @@ func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceO
 			TotalPrice: price * float64(item.Quantity),
 		})
 	}
+	order := &domain.Order{
+		OrderID:        orderID,
+		UserID:         userID,
+		AddressID:      req.AddressID,
+		OrderStatus:    "placed",
+		PaymentMethod:  "wallet",
+		PaymentStatus:  "paid",
+		Subtotal:       checkout.Subtotal,
+		OfferDiscount:  totalOfferDiscount, 
+		TaxAmount:      checkout.TaxAmount,
+		CouponDiscount: checkout.CouponDiscount,
+		ShippingCharge: checkout.ShippingCharge,
+		FinalAmount:    checkout.FinalAmount,
+	}
+
 	err = repository.CreateOrderTransaction(order, orderItems, userID)
 	if err != nil {
 		return nil, err
 	}
+
 	newBalance := wallet.Balance - checkout.FinalAmount
 
 	err = repository.UpdateWalletBalance(wallet.ID, newBalance)
 	if err != nil {
 		return nil, err
 	}
+
 	transaction := &domain.WalletTransaction{
 		WalletID:    wallet.ID,
 		Amount:      checkout.FinalAmount,
 		Type:        "debit",
 		Description: "order payment",
 	}
+
 	err = repository.CreateWalletTransaction(transaction)
 	if err != nil {
 		return nil, err
 	}
+
 	return &models.PlaceOrderResponse{
 		OrderID:     orderID,
 		Message:     "wallet payment successful",
 		FinalAmount: checkout.FinalAmount,
 	}, nil
 }
+
+// func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrderResponse, error) {
+// 	if req.PaymentMethod != "wallet" {
+// 		return nil, errors.New("invalid payment method")
+// 	}
+// 	_, err := repository.GetAddressByIDAndUserID(req.AddressID, userID)
+// 	if err != nil {
+// 		return nil, errors.New("address not found")
+// 	}
+// 	checkout, err := GetCheckoutPage(userID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	wallet, err := repository.GetWalletByUserID(userID)
+// 	if err != nil {
+// 		return nil, errors.New("wallet not found")
+// 	}
+// 	if wallet.Balance < checkout.FinalAmount {
+// 		return nil, errors.New("insufficient wallet balance")
+// 	}
+// 	cartItems, err := repository.GetCartItemsForCheckout(userID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
+// 	order := &domain.Order{
+// 		OrderID:       orderID,
+// 		UserID:        userID,
+// 		AddressID:     req.AddressID,
+// 		OrderStatus:   "placed",
+// 		PaymentMethod: "wallet",
+
+// 		PaymentStatus:  "paid",
+// 		Subtotal:       checkout.Subtotal,
+// 		TaxAmount:      checkout.TaxAmount,
+// 		CouponDiscount: checkout.CouponDiscount,
+// 		ShippingCharge: checkout.ShippingCharge,
+// 		FinalAmount:    checkout.FinalAmount,
+// 	}
+// 	var orderItems []domain.OrderItem
+
+// 	for _, item := range cartItems {
+
+// 		price := item.Product.Price
+
+// 		bestOffer := 0.0
+
+// 		productOffer, err := repository.GetActiveProductOffer(item.ProductID)
+// 		if err == nil {
+// 			bestOffer = productOffer.DiscountPercentage
+// 		}
+
+// 		categoryOffer, err := repository.GetActiveCategoryOffer(item.Product.CategoryID)
+// 		if err == nil && categoryOffer.DiscountPercentage > bestOffer {
+// 			bestOffer = categoryOffer.DiscountPercentage
+// 		}
+
+// 		if bestOffer > 0 {
+// 			price = price - (price*bestOffer)/100
+// 		}
+
+// 		orderItems = append(orderItems, domain.OrderItem{
+// 			ProductID:  item.ProductID,
+// 			VariantID:  item.VariantID,
+// 			Quantity:   item.Quantity,
+// 			Price:      price,
+// 			TotalPrice: price * float64(item.Quantity),
+// 		})
+// 	}
+// 	err = repository.CreateOrderTransaction(order, orderItems, userID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	newBalance := wallet.Balance - checkout.FinalAmount
+
+// 	err = repository.UpdateWalletBalance(wallet.ID, newBalance)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	transaction := &domain.WalletTransaction{
+// 		WalletID:    wallet.ID,
+// 		Amount:      checkout.FinalAmount,
+// 		Type:        "debit",
+// 		Description: "order payment",
+// 	}
+// 	err = repository.CreateWalletTransaction(transaction)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &models.PlaceOrderResponse{
+// 		OrderID:     orderID,
+// 		Message:     "wallet payment successful",
+// 		FinalAmount: checkout.FinalAmount,
+// 	}, nil
+// }
 
 func GetOrderSuccess(orderID string) (*models.OrderSuccessResponse, error) {
 	_, err := repository.GetOrderByOrderIDPayment(orderID)
