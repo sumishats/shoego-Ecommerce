@@ -85,6 +85,7 @@ func GenerateSalesReportPDF(report *models.SalesReportResponse) ([]byte, error) 
 		pdf.Cell(25, 8, fmt.Sprintf("%.2f", order.OrderAmount))
 		pdf.Cell(25, 8, fmt.Sprintf("%.2f", order.TotalDiscount))
 		pdf.Cell(20, 8, fmt.Sprintf("%.2f", order.NetAmount))
+
 		pdf.Cell(25, 8, order.OrderStatus)
 
 		pdf.Ln(8)
