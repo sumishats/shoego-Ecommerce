@@ -61,17 +61,11 @@ func GenerateSalesReportPDF(report *models.SalesReportResponse) ([]byte, error) 
 
 	pdf.Ln(15)
 
-	// ========================= Table Header =========================
+	// Table Header 
 
 	pdf.SetFont("Arial", "B", 10)
-
-	// CHANGED: Increased Order ID width
 	pdf.Cell(55, 8, "Order ID")
-
-	// CHANGED: Increased Customer width
 	pdf.Cell(40, 8, "Customer")
-
-	// CHANGED: Reduced remaining column widths
 	pdf.Cell(25, 8, "Amount")
 	pdf.Cell(25, 8, "Discount")
 	pdf.Cell(20, 8, "Net")
@@ -79,66 +73,22 @@ func GenerateSalesReportPDF(report *models.SalesReportResponse) ([]byte, error) 
 
 	pdf.Ln(8)
 
-	// ========================= Table Data =========================
+	//Table Data
 
 	pdf.SetFont("Arial", "", 9)
 
 	for _, order := range report.Orders {
 
-		// CHANGED: Increased width
+		
 		pdf.Cell(55, 8, order.OrderID)
-
-		// CHANGED: Increased width
 		pdf.Cell(40, 8, order.CustomerName)
-
-		// CHANGED: Width changed
 		pdf.Cell(25, 8, fmt.Sprintf("%.2f", order.OrderAmount))
-
-		// CHANGED: Width changed
 		pdf.Cell(25, 8, fmt.Sprintf("%.2f", order.TotalDiscount))
-
-		// CHANGED: Width changed
 		pdf.Cell(20, 8, fmt.Sprintf("%.2f", order.NetAmount))
-
-		// CHANGED: Width changed
 		pdf.Cell(25, 8, order.OrderStatus)
 
 		pdf.Ln(8)
 	}
-
-	// // Table Header
-
-	// pdf.SetFont("Arial", "B", 10)
-
-	// pdf.Cell(35, 8, "Order ID")
-	// pdf.Cell(35, 8, "Customer")
-	// pdf.Cell(30, 8, "Amount")
-	// pdf.Cell(30, 8, "Discount")
-	// pdf.Cell(30, 8, "Net")
-	// pdf.Cell(30, 8, "Status")
-
-	// pdf.Ln(8)
-
-	// // Table Data
-
-	// pdf.SetFont("Arial", "", 9)
-
-	// for _, order := range report.Orders {
-
-	// 	pdf.Cell(35, 8, order.OrderID)
-
-	// 	pdf.Cell(35, 8, order.CustomerName)
-
-	// 	pdf.Cell(30, 8, fmt.Sprintf("%.2f", order.OrderAmount))
-
-	// 	pdf.Cell(30, 8, fmt.Sprintf("%.2f", order.TotalDiscount))
-
-	// 	pdf.Cell(30, 8, fmt.Sprintf("%.2f", order.NetAmount))
-
-	// 	pdf.Cell(30, 8, order.OrderStatus)
-
-	// 	pdf.Ln(8)
-	// }
 
 	// Convert PDF to bytes
 
