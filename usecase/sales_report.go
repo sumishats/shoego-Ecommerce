@@ -113,18 +113,17 @@ func GetSalesReport(filter, startDateStr, endDateStr string) (*models.SalesRepor
 
 func DownloadSalesReportPDF(period, from, to string) ([]byte, error) {
 
-	// Get the sales report data
 	report, err := GetSalesReport(period, from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate PDF from the report
+	
 	pdfBytes, err := helper.GenerateSalesReportPDF(report)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return PDF bytes
+	
 	return pdfBytes, nil
 }
