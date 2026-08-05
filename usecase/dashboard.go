@@ -14,3 +14,13 @@ func GetAdminBestSellingProducts() ([]models.BestSellingProductResponse, error) 
 
 	return products, nil
 }
+
+func GetAdminBestSellingCategories() ([]models.BestSellingCategoryResponse, error) {
+
+	categories, err := repository.GetAdminBestSellingCategories()
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
