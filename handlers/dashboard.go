@@ -1,0 +1,23 @@
+package handlers
+
+import (
+	"net/http"
+
+	"shoego/response"
+	"shoego/usecase"
+
+	"github.com/gin-gonic/gin"
+)
+
+func GetAdminBestSellingProducts(c *gin.Context) {
+
+	products, err := usecase.GetAdminBestSellingProducts()
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusInternalServerError,"failed to fetch best selling products",nil,err.Error())
+		c.JSON(http.StatusInternalServerError, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK,"best selling products fetched successfully",products,nil)
+	c.JSON(http.StatusOK, successRes)
+}
