@@ -10,7 +10,7 @@ import (
 
 func GetSalesReport(c *gin.Context) {
 
-	filter := c.DefaultQuery("filter", "daily")
+	filter := c.Query("filter")
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
 

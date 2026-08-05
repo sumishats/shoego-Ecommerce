@@ -16,6 +16,10 @@ func GetSalesReport(filter, startDateStr, endDateStr string) (*models.SalesRepor
 	today := time.Now()
 
 	switch filter {
+	case "", "all":
+
+		startDate = time.Date(2000, 1, 1, 0, 0, 0, 0, today.Location())
+		endDate = time.Date(today.Year(), today.Month(), today.Day(), 23, 59, 59, 999999999, today.Location())
 
 	case "daily":
 
@@ -118,12 +122,10 @@ func DownloadSalesReportPDF(period, from, to string) ([]byte, error) {
 		return nil, err
 	}
 
-	
 	pdfBytes, err := helper.GenerateSalesReportPDF(report)
 	if err != nil {
 		return nil, err
 	}
 
-	
 	return pdfBytes, nil
 }
