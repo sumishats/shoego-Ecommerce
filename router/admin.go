@@ -65,6 +65,8 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	{
 		//dashboard
 		adminProtected.GET("/dashboard/best-selling-products", handlers.GetAdminBestSellingProducts)
+		adminProtected.GET("/dashboard/best-selling-categories", handlers.GetAdminBestSellingCategories)
+		adminProtected.GET("/dashboard/sales-chart", handlers.GetAdminSalesChart)
 	}
 	{
 		//coupon managemnt
@@ -77,7 +79,7 @@ func AdminRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 		//sales report
 		adminProtected.GET("/sales-report", handlers.GetSalesReport)
 		adminProtected.GET("/sales-report/pdf", handlers.DownloadSalesReportPDF)
-		
+
 	}
 	{
 		//admin logout
