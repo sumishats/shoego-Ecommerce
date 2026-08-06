@@ -11,3 +11,7 @@ type BestSellingCategoryResponse struct {
 	CategoryName string `json:"category_name"`
 	TotalSold    int    `json:"total_sold"`
 }
+type SalesChartResponse struct {
+	Label      string  `json:"label"`
+	TotalSales float64 `json:"total_sales"`
+}
