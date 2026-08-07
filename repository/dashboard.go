@@ -55,6 +55,30 @@ func GetAdminBestSellingCategories() ([]models.BestSellingCategoryResponse, erro
 	return categories, nil
 }
 
+func GetAdminBestSellingBrands() ([]models.BestSellingBrandResponse, error) {
+
+	var brands []models.BestSellingBrandResponse
+
+	err := database.DB.Table("order_items").
+		Select(`
+			products.brand_id,
+			SUM(order_items.quantity) AS total_sold
+		`).
+		Joins("JOIN products ON products.id = order_items.product_id").
+		Joins("JOIN orders ON orders.id = order_items.order_id").
+		Where("orders.order_status = ?", "delivered").
+		Group("products.brand_id").
+		Order("total_sold DESC").
+		Limit(10).
+		Scan(&brands).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return brands, nil
+}
+
 func GetAdminSalesChart(filter string) ([]models.SalesChartResponse, error) {
 
 	var sales []models.SalesChartResponse
