@@ -289,8 +289,19 @@ func GetCategories(search string, page, limit int) (map[string]interface{}, erro
 		return nil, err
 	}
 
+	var responseData []models.CategoryResponse
+
+	for _, category := range categories {
+		responseData = append(responseData, models.CategoryResponse{
+			ID:          category.ID,
+			Name:        category.Name,
+			Description: category.Description,
+			IsListed:    category.IsListed,
+		})
+	}
+
 	return map[string]interface{}{
-		"data":  categories,
+		"data":  responseData,
 		"total": total,
 		"page":  page,
 		"limit": limit,
