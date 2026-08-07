@@ -34,6 +34,20 @@ func GetAdminBestSellingCategories(c *gin.Context) {
 	successRes := response.ClientResponse(http.StatusOK, "best selling categories fetched successfully", categories, nil)
 	c.JSON(http.StatusOK, successRes)
 }
+
+func GetAdminBestSellingBrands(c *gin.Context) {
+
+	brands, err := usecase.GetAdminBestSellingBrands()
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusInternalServerError,"failed to fetch best selling brands",nil,err.Error())
+		c.JSON(http.StatusInternalServerError, errRes)
+		return
+	}
+
+	successRes := response.ClientResponse(http.StatusOK,"best selling brands fetched successfully",brands,nil,)
+	c.JSON(http.StatusOK, successRes)
+}
+
 func GetAdminSalesChart(c *gin.Context) {
 
 	filter := c.Query("filter")

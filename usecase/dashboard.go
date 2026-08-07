@@ -25,6 +25,16 @@ func GetAdminBestSellingCategories() ([]models.BestSellingCategoryResponse, erro
 	return categories, nil
 }
 
+func GetAdminBestSellingBrands() ([]models.BestSellingBrandResponse, error) {
+
+	brands, err := repository.GetAdminBestSellingBrands()
+	if err != nil {
+		return nil, err
+	}
+
+	return brands, nil
+}
+
 func GetAdminSalesChart(filter string) ([]models.SalesChartResponse, error) {
 
 	sales, err := repository.GetAdminSalesChart(filter)
