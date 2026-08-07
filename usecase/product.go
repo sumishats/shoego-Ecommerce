@@ -301,7 +301,7 @@ func GetCategories(search string, page, limit int) (map[string]interface{}, erro
 	}
 
 	return map[string]interface{}{
-		"data":  categories,
+		"data":  responseData,
 		"total": total,
 		"page":  page,
 		"limit": limit,
