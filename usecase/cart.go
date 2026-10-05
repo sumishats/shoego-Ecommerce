@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"shoego/domain"
 	"shoego/models"
 	"shoego/repository"
 
@@ -10,7 +11,7 @@ import (
 
 const MaxCartQuantityPerProduct = 5
 
-func AddToCart(userID uint, productID uint, variantID uint) error {
+func AddToCart(userID uint, productID uint, variantID *uint) error {
 
 	product, err := repository.GetProductForCart(productID)
 	if err != nil {
@@ -28,55 +29,56 @@ func AddToCart(userID uint, productID uint, variantID uint) error {
 		return errors.New("category is unavailable")
 	}
 
-	variant, err := repository.GetVariantByID(variantID)
-	if err != nil {
-		return errors.New("variant not found")
+	var variant *domain.ProductVariant
+
+	if variantID != nil {
+
+		v, err := repository.GetVariantByID(*variantID)
+		if err != nil {
+			return errors.New("variant not found")
+		}
+
+		
+		if v.ProductID != productID {
+			return errors.New("invalid variant")
+		}
+
+		if v.Stock <= 0 {
+			return errors.New("variant out of stock")
+		}
+
+		variant = v
 	}
 
-	if variant.ProductID != productID {
-		return errors.New("invalid variant")
-	}
-
-	if variant.Stock <= 0 {
-		return errors.New("variant out of stock")
-	}
-
+	// Get or create user cart
 	cart, err := repository.GetOrCreateCart(userID)
 	if err != nil {
 		return err
 	}
 
-	item, err := repository.GetCartItem(
-		cart.ID,
-		productID,
-		variantID,
-	)
+	item, err := repository.GetCartItem(cart.ID,productID,variantID,)
 
 	if err == nil {
 
 		newQty := item.Quantity + 1
 
-		if newQty > variant.Stock {
-			return errors.New("cannot add more than available stock")
+		if variant != nil {
+			if newQty > variant.Stock {
+				return errors.New("cannot add more than available stock")
+			}
 		}
 
 		if newQty > MaxCartQuantityPerProduct {
 			return errors.New("maximum quantity limit reached")
 		}
 
-		err = repository.UpdateCartItemQuantity(
-			item.ID,
-			newQty,
-		)
+		err = repository.UpdateCartItemQuantity(item.ID,newQty,)
 
 		if err != nil {
 			return err
 		}
 
-		_ = repository.RemoveProductFromWishlist(
-			userID,
-			productID,
-		)
+		_ = repository.RemoveProductFromWishlist(userID,productID,)
 
 		return nil
 	}
@@ -85,24 +87,17 @@ func AddToCart(userID uint, productID uint, variantID uint) error {
 		return err
 	}
 
-	err = repository.CreateCartItem(
-		cart.ID,
-		productID,
-		variantID,
-		1,
-	)
+	err = repository.CreateCartItem(cart.ID,productID,variantID,1,)
 
 	if err != nil {
 		return err
 	}
 
-	_ = repository.RemoveProductFromWishlist(
-		userID,
-		productID,
-	)
+	_ = repository.RemoveProductFromWishlist(userID,productID,)
 
 	return nil
 }
+
 func GetCart(userID uint) (*models.CartResponse, error) {
 
 	items, err := repository.GetCartItemsByUserID(userID)
