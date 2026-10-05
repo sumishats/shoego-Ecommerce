@@ -52,18 +52,20 @@ func GetProductForCart(productID uint) (*domain.Product, error) {
 	return &product, nil
 }
 
-func GetCartItem(cartID, productID, variantID uint) (*domain.CartItem, error) {
+func GetCartItem(cartID, productID uint, variantID *uint) (*domain.CartItem, error) {
 
 	var item domain.CartItem
 
-	err := database.DB.
-		Where(
-			"cart_id = ? AND product_id = ? AND variant_id = ?",
-			cartID,
-			productID,
-			&variantID,
-		).
-		First(&item).Error
+	query := database.DB.
+		Where("cart_id = ? AND product_id = ?", cartID, productID)
+
+	if variantID == nil {
+		query = query.Where("variant_id IS NULL")
+	} else {
+		query = query.Where("variant_id = ?", *variantID)
+	}
+
+	err := query.First(&item).Error
 
 	if err != nil {
 		return nil, err
@@ -72,12 +74,12 @@ func GetCartItem(cartID, productID, variantID uint) (*domain.CartItem, error) {
 	return &item, nil
 }
 
-func CreateCartItem(cartID, productID, variantID uint, quantity int) error {
+func CreateCartItem(cartID, productID uint, variantID *uint, quantity int) error {
 
 	item := domain.CartItem{
 		CartID:    cartID,
 		ProductID: productID,
-		VariantID: &variantID,
+		VariantID: variantID,
 		Quantity:  quantity,
 	}
 

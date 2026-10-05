@@ -1,8 +1,9 @@
 package models
 
+
 type AddToCartRequest struct {
-	ProductID uint `json:"product_id" binding:"required"`
-	VariantID uint `json:"variant_id" binding:"required"`
+    ProductID uint  `json:"product_id" binding:"required"`
+    VariantID *uint `json:"variant_id"`
 }
 
 type UpdateCartQuantityRequest struct {
