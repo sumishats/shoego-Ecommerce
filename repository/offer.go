@@ -34,7 +34,7 @@ func GetAllProductOffers(page, limit int) ([]domain.ProductOffer, int64, error) 
 
 	database.DB.Model(&domain.ProductOffer{}).Count(&totalCount)
 
-	err := database.DB.Preload("Product").Limit(limit).Offset(offset).Find(&offers).Error
+	err := database.DB.Preload("Product").Order("id DESC").Limit(limit).Offset(offset).Find(&offers).Error
 
 	return offers, totalCount, err
 }
@@ -86,7 +86,7 @@ func GetAllCategoryOffers(page, limit int) ([]domain.CategoryOffer, int64, error
 	}
 
 	// paginated fetch
-	err = database.DB.Preload("Category").Limit(limit).Offset(offset).Find(&offers).Error
+	err = database.DB.Preload("Category").Order("id DESC").Limit(limit).Offset(offset).Find(&offers).Error
 
 	return offers, totalCount, err
 }

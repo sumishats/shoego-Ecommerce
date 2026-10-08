@@ -61,18 +61,41 @@ func GetAllProductOffers(page, limit int) (models.PaginatedResponse, error) {
 
 	var result []models.ProductOfferResponse
 
+	today := time.Now().Format("2006-01-02")
+
 	for _, offer := range offers {
+
+		startDate := offer.StartDate.Format("2006-01-02")
+		endDate := offer.EndDate.Format("2006-01-02")
+
+		isActive := offer.IsActive &&
+			today >= startDate &&
+			today <= endDate
+
 		result = append(result, models.ProductOfferResponse{
 			ID:                 offer.ID,
 			ProductID:          offer.ProductID,
 			ProductName:        offer.Product.Name,
 			OfferName:          offer.OfferName,
 			DiscountPercentage: offer.DiscountPercentage,
-			StartDate:          offer.StartDate.Format("2006-01-02"),
-			EndDate:            offer.EndDate.Format("2006-01-02"),
-			IsActive:           offer.IsActive,
+			StartDate:          startDate,
+			EndDate:            endDate,
+			IsActive:           isActive,
 		})
 	}
+
+	// for _, offer := range offers {
+	// 	result = append(result, models.ProductOfferResponse{
+	// 		ID:                 offer.ID,
+	// 		ProductID:          offer.ProductID,
+	// 		ProductName:        offer.Product.Name,
+	// 		OfferName:          offer.OfferName,
+	// 		DiscountPercentage: offer.DiscountPercentage,
+	// 		StartDate:          offer.StartDate.Format("2006-01-02"),
+	// 		EndDate:            offer.EndDate.Format("2006-01-02"),
+	// 		IsActive:           offer.IsActive,
+	// 	})
+	// }
 
 	totalPages := int((totalCount + int64(limit) - 1) / int64(limit))
 
@@ -143,18 +166,41 @@ func GetAllCategoryOffers(page, limit int) (models.PaginatedCategoryOfferRespons
 
 	var result []models.CategoryOfferResponse
 
+	today := time.Now().Format("2006-01-02")
+
 	for _, offer := range offers {
+
+		startDate := offer.StartDate.Format("2006-01-02")
+		endDate := offer.EndDate.Format("2006-01-02")
+
+		isActive := offer.IsActive &&
+			today >= startDate &&
+			today <= endDate
+
 		result = append(result, models.CategoryOfferResponse{
 			ID:                 offer.ID,
 			CategoryID:         offer.CategoryID,
 			CategoryName:       offer.Category.Name,
 			OfferName:          offer.OfferName,
 			DiscountPercentage: offer.DiscountPercentage,
-			StartDate:          offer.StartDate.Format("2006-01-02"),
-			EndDate:            offer.EndDate.Format("2006-01-02"),
-			IsActive:           offer.IsActive,
+			StartDate:          startDate,
+			EndDate:            endDate,
+			IsActive:           isActive,
 		})
 	}
+
+	// for _, offer := range offers {
+	// 	result = append(result, models.CategoryOfferResponse{
+	// 		ID:                 offer.ID,
+	// 		CategoryID:         offer.CategoryID,
+	// 		CategoryName:       offer.Category.Name,
+	// 		OfferName:          offer.OfferName,
+	// 		DiscountPercentage: offer.DiscountPercentage,
+	// 		StartDate:          offer.StartDate.Format("2006-01-02"),
+	// 		EndDate:            offer.EndDate.Format("2006-01-02"),
+	// 		IsActive:           offer.IsActive,
+	// 	})
+	// }
 
 	totalPages := int((totalCount + int64(limit) - 1) / int64(limit))
 
