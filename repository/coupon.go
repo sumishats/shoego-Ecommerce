@@ -36,7 +36,7 @@ func GetAllCoupons(page, limit int) ([]domain.Coupon, int64, error) {
 
 	offset := (page - 1) * limit
 
-	if err := db.Offset(offset).Limit(limit).Find(&coupons).Error; err != nil {
+	if err := db.Order("id DESC").Offset(offset).Limit(limit).Find(&coupons).Error; err != nil {
 
 		return nil, 0, err
 	}

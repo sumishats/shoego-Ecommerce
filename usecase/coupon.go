@@ -59,7 +59,13 @@ func GetAllCoupons(page, limit int) (*models.CouponListResponse, error) {
 
 	var response []models.CouponResponse
 
+	today := time.Now().Format("2006-01-02")
+
 	for _, coupon := range coupons {
+
+		expiryDate := coupon.ExpiryDate.Format("2006-01-02")
+
+		isActive := coupon.IsActive && today <= expiryDate
 
 		response = append(response, models.CouponResponse{
 			ID:             coupon.ID,
@@ -67,10 +73,10 @@ func GetAllCoupons(page, limit int) (*models.CouponListResponse, error) {
 			DiscountType:   coupon.DiscountType,
 			DiscountAmount: coupon.DiscountAmount,
 			MinimumAmount:  coupon.MinimumAmount,
-			ExpiryDate:     coupon.ExpiryDate.Format("2006-01-02"),
+			ExpiryDate:     expiryDate,
 			UsageLimit:     coupon.UsageLimit,
 			UsedCount:      coupon.UsedCount,
-			IsActive:       coupon.IsActive,
+			IsActive:       isActive,
 		})
 	}
 
@@ -273,7 +279,6 @@ func RemoveCoupon(userID uint) error {
 	}
 
 	cart.CouponCode = ""
-	
 
 	return repository.UpdateCart(cart)
 }
