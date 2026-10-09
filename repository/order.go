@@ -1,11 +1,14 @@
 package repository
 
 import (
+	"errors"
+	"fmt"
 	"shoego/database"
 	"shoego/domain"
 	"strings"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func GetAdminOrders(search, status, sortBy, date string, limit, offset int) ([]domain.Order, int64, error) {
@@ -72,11 +75,11 @@ func UpdateOrderStatus(orderID uint, status string) error {
 	if err := database.DB.Preload("OrderItems").First(&order, orderID).Error; err != nil {
 		return err
 	}
-	
+
 	if status == "returned" {
 
 		for _, item := range order.OrderItems {
-		
+
 			if item.VariantID == nil {
 
 				var product domain.Product
@@ -268,4 +271,190 @@ func GetOrderItemsByOrderID(orderID uint) ([]domain.OrderItem, error) {
 	err := database.DB.Where("order_id = ?", orderID).Find(&items).Error
 
 	return items, err
+}
+
+func CancelOrderItemTransaction(userID uint,orderID string,itemID uint,reason string,) error {
+
+    return database.DB.Transaction(func(tx *gorm.DB) error {
+
+        var order domain.Order
+
+        err := tx.Clauses(clause.Locking{Strength: "UPDATE"}). Preload("OrderItems").
+            Where("user_id = ? AND order_id = ?", userID, orderID).First(&order).Error
+
+        if err != nil {
+            return err
+        }
+
+        if order.OrderStatus == "delivered" ||
+            order.OrderStatus == "returned" {
+            return errors.New("this order cannot be cancelled")
+        }
+
+        
+        var item domain.OrderItem
+
+        err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ? AND order_id = ?", itemID, order.ID).First(&item).Error
+
+        if err != nil {
+            return err
+        }
+
+        if item.ItemStatus == "cancelled" {
+            return errors.New("item already cancelled")
+        }
+
+        if item.ItemStatus == "returned" {
+            return errors.New("returned item cannot be cancelled")
+        }
+
+        //restore product stock 
+        result := tx.Model(&domain.Product{}).
+            Where("id = ?", item.ProductID).UpdateColumn("stock",gorm.Expr("stock + ?", item.Quantity),)
+
+        if result.Error != nil {
+            return result.Error
+        }
+
+        if result.RowsAffected == 0 {
+            return errors.New("product not found")
+        }
+
+        if item.VariantID != nil {
+
+        result = tx.Model(&domain.ProductVariant{}).Where("id = ?", *item.VariantID).UpdateColumn("stock",gorm.Expr("stock + ?", item.Quantity),)
+
+            if result.Error != nil {
+                return result.Error
+            }
+
+            if result.RowsAffected == 0 {
+                return errors.New("product variant not found")
+            }
+        }
+
+        
+        err = tx.Model(&domain.OrderItem{}).Where("id = ?", item.ID).
+            Updates(map[string]interface{}{
+                "item_status":        "cancelled",
+                "cancellation_reason": reason,
+            }).Error
+
+        if err != nil {
+            return err
+        }
+
+        allCancelled := true
+        totalItemValue := 0.0
+
+        for _, orderItem := range order.OrderItems {
+
+            if orderItem.ItemStatus == "cancelled" {
+                continue
+            }
+
+            totalItemValue += orderItem.TotalPrice
+
+            if orderItem.ID != item.ID {
+                allCancelled = false
+            }
+        }
+
+        if allCancelled {
+            order.OrderStatus = "cancelled"
+        } else {
+            order.OrderStatus = "partially_cancelled"
+        }
+
+        shouldRefund := order.PaymentStatus == "paid" && (order.PaymentMethod == "razorpay" ||order.PaymentMethod == "wallet")
+
+        if shouldRefund {
+
+            var wallet domain.Wallet
+
+            err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id = ?", userID).First(&wallet).Error
+
+            if errors.Is(err, gorm.ErrRecordNotFound) {
+
+                wallet = domain.Wallet{
+                    UserID:  userID,
+                    Balance: 0,
+                }
+
+                if err = tx.Create(&wallet).Error; err != nil {
+                    return err
+                }
+
+            } else if err != nil {
+                return err
+            }
+
+            var alreadyRefunded float64
+
+            err = tx.Table("wallet_transactions").Joins("JOIN wallets ON wallets.id = wallet_transactions.wallet_id",).
+                Where("wallets.user_id = ? AND wallet_transactions.type = ? AND wallet_transactions.description LIKE ?",userID,"credit","Order Cancel refund: "+order.OrderID+"%",).
+                Select("COALESCE(SUM(wallet_transactions.amount), 0)",).Scan(&alreadyRefunded).Error
+
+            if err != nil {
+                return err
+            }
+
+            remainingAmount := order.FinalAmount - alreadyRefunded
+
+            if remainingAmount < 0 {
+                remainingAmount = 0
+            }
+
+            refundAmount := 0.0
+
+            if allCancelled {
+                refundAmount = remainingAmount
+            } else if totalItemValue > 0 {
+                refundAmount = order.FinalAmount *
+                    item.TotalPrice / totalItemValue
+
+                if refundAmount > remainingAmount {
+                    refundAmount = remainingAmount
+                }
+            }
+
+            if refundAmount > 0 {
+
+                err = tx.Model(&domain.Wallet{}).Where("id = ?", wallet.ID).UpdateColumn("balance",gorm.Expr("balance + ?", refundAmount),).Error
+
+                if err != nil {
+                    return err
+                }
+
+                transaction := domain.WalletTransaction{
+                    WalletID: wallet.ID,
+                    Amount:   refundAmount,
+                    Type:     "credit",
+                    Description: fmt.Sprintf(
+                        "Order Cancel refund: %s item %d",
+                        order.OrderID,
+                        item.ID,
+                    ),
+                }
+
+                if err = tx.Create(&transaction).Error; err != nil {
+                    return err
+                }
+            }
+        }
+
+        updates := map[string]interface{}{
+            "order_status": order.OrderStatus,
+        }
+
+        if allCancelled {
+            if shouldRefund {
+                updates["payment_status"] = "refunded"
+            } else if order.PaymentStatus != "paid" {
+                updates["payment_status"] = "cancelled"
+            }
+        }
+
+        return tx.Model(&domain.Order{}).Where("id = ?", order.ID).Updates(updates).Error
+    })
 }

@@ -1,38 +1,87 @@
 package usecase
 
 import (
+	"errors"
+	"shoego/database"
 	"shoego/domain"
 	"shoego/models"
 	"shoego/repository"
+
+	"gorm.io/gorm"
 )
 
 func CreditWallet(userID uint, amount float64, description string) error {
+	if amount <= 0 {
+		return errors.New("refund amount must be greater than zero")
+	}
 
-	wallet, err := repository.GetWalletByUserID(userID)
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		var wallet domain.Wallet
 
-	if err != nil {
-		wallet = &domain.Wallet{
-			UserID:  userID,
-			Balance: 0,
-		}
-		err = repository.CreateWallet(wallet)
-		if err != nil {
+		err := tx.Where("user_id = ?", userID).First(&wallet).Error
+
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			wallet = domain.Wallet{
+				UserID:  userID,
+				Balance: 0,
+			}
+
+			if err := tx.Create(&wallet).Error; err != nil {
+				return err
+			}
+		} else if err != nil {
 			return err
 		}
-	}
-	wallet.Balance += amount
-	err = repository.UpdateWalletBalance(wallet.ID, wallet.Balance)
-	if err != nil {
-		return err
-	}
-	transaction := &domain.WalletTransaction{
-		WalletID:    wallet.ID,
-		Amount:      amount,
-		Type:        "credit",
-		Description: description,
-	}
-	return repository.CreateWalletTransaction(transaction)
+
+		wallet.Balance += amount
+
+		if err := tx.Model(&wallet).
+			Update("balance", wallet.Balance).Error; err != nil {
+			return err
+		}
+
+		transaction := domain.WalletTransaction{
+			WalletID:    wallet.ID,
+			Amount:      amount,
+			Type:        "credit",
+			Description: description,
+		}
+
+		if err := tx.Create(&transaction).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
+
+// func CreditWallet(userID uint, amount float64, description string) error {
+
+// 	wallet, err := repository.GetWalletByUserID(userID)
+
+// 	if err != nil {
+// 		wallet = &domain.Wallet{
+// 			UserID:  userID,
+// 			Balance: 0,
+// 		}
+// 		err = repository.CreateWallet(wallet)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	wallet.Balance += amount
+// 	err = repository.UpdateWalletBalance(wallet.ID, wallet.Balance)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	transaction := &domain.WalletTransaction{
+// 		WalletID:    wallet.ID,
+// 		Amount:      amount,
+// 		Type:        "credit",
+// 		Description: description,
+// 	}
+// 	return repository.CreateWalletTransaction(transaction)
+// }
 
 func GetWallet(userID uint) (*models.WalletResponse, error) {
 
