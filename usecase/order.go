@@ -336,7 +336,8 @@ func CancelOrder(userID uint, orderID, reason string) error {
 	return repository.UpdateOrder(&order)
 }
 
-func CancelOrderItem(userID uint, orderID string, itemID uint, reason string) error {
+func CancelOrderItem(userID uint,orderID string,itemID uint,reason string,) error {
+
 	order, err := repository.GetOrderByOrderID(userID, orderID)
 	if err != nil {
 		return err
@@ -363,35 +364,8 @@ func CancelOrderItem(userID uint, orderID string, itemID uint, reason string) er
 		return errors.New("returned item cannot be cancelled")
 	}
 
-	item.ItemStatus = "cancelled"
-	item.CancellationReason = reason
 
-	if err := repository.UpdateOrderItem(&item); err != nil {
-		return err
-	}
-
-	if err := repository.IncrementProductStock(item.ProductID, item.Quantity); err != nil {
-		return err
-	}
-
-	allCancelled := true
-	for _, orderItem := range order.OrderItems {
-		if orderItem.ID == item.ID {
-			continue
-		}
-		if orderItem.ItemStatus != "cancelled" {
-			allCancelled = false
-			break
-		}
-	}
-
-	if allCancelled {
-		order.OrderStatus = "cancelled"
-	} else {
-		order.OrderStatus = "partially_cancelled"
-	}
-
-	return repository.UpdateOrder(&order)
+	return repository.CancelOrderItemTransaction(userID,orderID,itemID,reason,)
 }
 
 func ReturnOrder(userID uint, orderID, reason string) error {
