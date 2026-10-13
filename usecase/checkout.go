@@ -60,8 +60,21 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 			return nil, errors.New(product.Name + " category unavailable")
 		}
 
-		if product.Stock < item.Quantity {
-			return nil, errors.New(product.Name + " out of stock")
+		if item.VariantID != nil {
+
+			if item.Variant.ID == 0 {
+				return nil, errors.New("product variant not found")
+			}
+
+			if item.Variant.Stock < item.Quantity {
+				return nil, errors.New(product.Name + " variant out of stock")
+			}
+
+		} else {
+
+			if product.Stock < item.Quantity {
+				return nil, errors.New(product.Name + " out of stock")
+			}
 		}
 
 		image := ""
@@ -90,11 +103,11 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 		if offerPercentage > 0 {
 			discountedPrice = price - (price*offerPercentage)/100
 		}
-
-		itemTotal := discountedPrice * float64(item.Quantity)
-
 		discountedPrice = math.Round(discountedPrice*100) / 100
-		itemTotal = math.Round(itemTotal*100) / 100
+
+		itemTotal := math.Round(
+			discountedPrice*float64(item.Quantity)*100,
+		) / 100
 
 		size := ""
 
@@ -109,9 +122,13 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 			Image:     image,
 			Quantity:  item.Quantity,
 			Price:     discountedPrice,
-			ItemTotal: discountedPrice * float64(item.Quantity),
+			ItemTotal: itemTotal,
 		})
 	}
+
+	if len(items) == 0 {
+        return nil, errors.New("no valid cart items found")
+    }
 
 	cart, err := repository.GetCartByUserID(userID)
 	if err != nil {
@@ -151,6 +168,7 @@ func GetCheckoutPage(userID uint) (*models.CheckoutPageResponse, error) {
 			if couponDiscount > subtotal {
 				couponDiscount = subtotal
 			}
+			couponDiscount = math.Round(couponDiscount*100) / 100
 		}
 	}
 
@@ -274,13 +292,11 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 
 	orderID := fmt.Sprintf("ORD%d", time.Now().UnixNano())
 
-	
 	var orderItems []domain.OrderItem
 	var totalOfferDiscount float64
 
 	for _, item := range cartItems {
 
-		
 		originalPrice := item.Product.Price
 		price := originalPrice
 
@@ -327,7 +343,7 @@ func PlaceCODOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceOrde
 		OrderStatus:    "placed",
 		PaymentMethod:  "cod",
 		Subtotal:       checkout.Subtotal,
-		OfferDiscount:  totalOfferDiscount, 
+		OfferDiscount:  totalOfferDiscount,
 		TaxAmount:      checkout.TaxAmount,
 		CouponDiscount: checkout.CouponDiscount,
 		ShippingCharge: checkout.ShippingCharge,
@@ -381,7 +397,6 @@ func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceO
 
 	for _, item := range cartItems {
 
-
 		originalPrice := item.Product.Price
 		price := originalPrice
 
@@ -422,7 +437,7 @@ func PlaceWalletOrder(userID uint, req models.PlaceOrderRequest) (*models.PlaceO
 		PaymentMethod:  "wallet",
 		PaymentStatus:  "paid",
 		Subtotal:       checkout.Subtotal,
-		OfferDiscount:  totalOfferDiscount, 
+		OfferDiscount:  totalOfferDiscount,
 		TaxAmount:      checkout.TaxAmount,
 		CouponDiscount: checkout.CouponDiscount,
 		ShippingCharge: checkout.ShippingCharge,
