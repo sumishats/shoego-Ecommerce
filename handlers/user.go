@@ -94,14 +94,26 @@ func UserLoginWithPassword(c *gin.Context) {
 		return
 	}
 
+	c.SetSameSite(http.SameSiteLaxMode)
+
+	c.SetCookie(
+		"Authorization",      
+		LogedUser.AccessToken, 
+		15*60,                 // Cookie lifetime: 15 mint
+		"/",                  
+		"",                   
+		false,                 
+		true,               
+	)
+
 	successres := response.ClientResponse(http.StatusCreated, "succesed login user", LogedUser, nil)
 
 	c.JSON(http.StatusOK, successres)
 }
 
-//user profile
+// user profile
 func GetProfile(c *gin.Context) {
-	
+
 	userIDVal, exists := c.Get("user_id")
 	if !exists {
 		errRes := response.ClientResponse(http.StatusUnauthorized, "user not found in token", nil, nil)
@@ -148,7 +160,6 @@ func EditProfile(c *gin.Context) {
 	successRes := response.ClientResponse(http.StatusOK, "profile updated successfully", nil, nil)
 	c.JSON(http.StatusOK, successRes)
 }
-
 
 func ChangePassword(c *gin.Context) {
 	userIDVal, _ := c.Get("user_id")
@@ -216,18 +227,18 @@ func VerifyEmailChange(c *gin.Context) {
 	c.JSON(http.StatusOK, successRes)
 }
 
-func GetAddresses(c *gin.Context){
-	userIDVal,_:=c.Get("user_id")
-	userID:= userIDVal.(uint)
+func GetAddresses(c *gin.Context) {
+	userIDVal, _ := c.Get("user_id")
+	userID := userIDVal.(uint)
 
-	addresses,err:=usecase.GetUserAddresses(userID)
-	if err!=nil{
-		errRes:=response.ClientResponse(http.StatusBadRequest,"failed to get addresses",nil,err.Error())
-		c.JSON(http.StatusBadRequest,errRes)
+	addresses, err := usecase.GetUserAddresses(userID)
+	if err != nil {
+		errRes := response.ClientResponse(http.StatusBadRequest, "failed to get addresses", nil, err.Error())
+		c.JSON(http.StatusBadRequest, errRes)
 		return
 	}
-	successRes:=response.ClientResponse(http.StatusOK,"addresses fetched successfully",addresses,nil)
-	c.JSON(http.StatusOK,successRes)
+	successRes := response.ClientResponse(http.StatusOK, "addresses fetched successfully", addresses, nil)
+	c.JSON(http.StatusOK, successRes)
 }
 
 func AddAddress(c *gin.Context) {
@@ -321,6 +332,6 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	successRes:=response.ClientResponse(http.StatusOK,"logout successful",nil,nil)
-	c.JSON(http.StatusOK,successRes)
+	successRes := response.ClientResponse(http.StatusOK, "logout successful", nil, nil)
+	c.JSON(http.StatusOK, successRes)
 }

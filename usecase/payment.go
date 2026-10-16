@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"shoego/config"
 	"shoego/database"
 	"shoego/domain"
@@ -73,6 +74,8 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 			price = price - (price*bestOffer)/100
 		}
 
+		price = math.Round(price*100) / 100
+
 		var variantID *uint
 
 		if item.VariantID != nil {
@@ -80,11 +83,11 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		}
 
 		orderItems = append(orderItems, domain.OrderItem{
-			ProductID:  item.Product.ID,
-			VariantID:  variantID,
-			Quantity:   item.Quantity,
-			Price:      item.Product.Price,
-			TotalPrice: item.Product.Price * float64(item.Quantity),
+			ProductID: item.Product.ID,
+			VariantID: variantID,
+			Quantity:  item.Quantity,
+			Price:     price,
+			TotalPrice: math.Round(price*float64(item.Quantity)*100) / 100,
 		})
 	}
 
@@ -100,7 +103,7 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		return nil, err
 	}
 
-	amount := int64(checkout.FinalAmount * 100)
+	amount := int64(math.Round(checkout.FinalAmount * 100))
 
 	data := map[string]interface{}{
 		"amount":   amount,

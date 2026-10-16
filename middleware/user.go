@@ -64,11 +64,11 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		c.Set("user_id", userID)
 		c.Set("user_email", userEmail)
 
-		
+		c.Set("auth_token", tokenString)
 
 		c.Next()
 	}
