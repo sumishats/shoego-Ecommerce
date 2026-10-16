@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <title>Login</title>
@@ -56,4 +56,38 @@ if(response.ok){
 </script>
 
 </body>
-</html>
+</html> -->
+
+
+
+<!-- <script>
+    async function login() {
+        try {
+            const response = await fetch("http://localhost:8080/login", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: document.getElementById("email").value,
+                    password: document.getElementById("password").value
+                })
+            });
+    
+            const data = await response.json();
+    
+            if (!response.ok) {
+                alert(data.message || "Login failed");
+                return;
+            }
+    
+            alert("Login successful!");
+            window.location.href = "/static/index.html";
+    
+        } catch (error) {
+            console.error("Login error:", error);
+            alert("Unable to connect to the server");
+        }
+    }
+    </script> -->

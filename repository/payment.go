@@ -97,39 +97,48 @@ func UpdateOrderAfterPayment(orderID uint) error {
 		Error
 }
 
-// ADDED
 func ReduceStockAfterPayment(orderID uint) error {
 
-	var orderItems []domain.OrderItem
+	return database.DB.Transaction(func(tx *gorm.DB) error {
 
-	err := database.DB.Where("order_id = ?", orderID).Find(&orderItems).Error
+		var orderItems []domain.OrderItem
 
-	if err != nil {
-		return err
-	}
-
-	for _, item := range orderItems {
-
-		var product domain.Product
-
-		err := database.DB.First(&product, item.ProductID).Error
-
+		err := tx.Where("order_id = ?", orderID).Find(&orderItems).Error
 		if err != nil {
 			return err
 		}
-		if product.Stock < item.Quantity {
-			return errors.New("insufficient stock")
+
+		for _, item := range orderItems {
+
+			if item.VariantID != nil {
+
+				result := tx.Model(&domain.ProductVariant{}).
+					Where("id = ? AND stock >= ?", *item.VariantID, item.Quantity).
+					Update("stock", gorm.Expr("stock - ?", item.Quantity))
+
+				if result.Error != nil {
+					return result.Error
+				}
+
+				if result.RowsAffected == 0 {
+					return errors.New("variant stock unavailable")
+				}
+
+			} else {
+				result := tx.Model(&domain.Product{}).
+					Where("id = ? AND stock >= ?", item.ProductID, item.Quantity).
+					Update("stock", gorm.Expr("stock - ?", item.Quantity))
+
+				if result.Error != nil {
+					return result.Error
+				}
+
+				if result.RowsAffected == 0 {
+					return errors.New("product stock unavailable")
+				}
+			}
 		}
-		product.Stock -= item.Quantity
 
-		err = database.DB.
-			Save(&product).
-			Error
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
