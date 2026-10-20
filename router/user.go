@@ -29,6 +29,10 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 	//checkout
 	r.GET("/checkout/handoff", handlers.OpenCheckoutHandoff)
 
+	
+	// Razorpay webhook
+	r.POST("/webhooks/razorpay", handlers.RazorpayWebhook)
+
 	userProtected := r.Group("/")
 	userProtected.Use(middleware.AuthMiddleware())
 
@@ -77,10 +81,10 @@ func UserRoutes(r *gin.RouterGroup, db *gorm.DB) *gin.RouterGroup {
 
 		userProtected.POST("/checkout/handoff", handlers.CreateCheckoutHandoff)
 
-		
-		//razorpay
+		//razorpay payment
 		userProtected.POST("/checkout/razorpay", handlers.CreateRazorpayOrder)
 		userProtected.POST("/checkout/razorpay/verify", handlers.VerifyPayment)
+		userProtected.POST("/checkout/razorpay/failure", handlers.HandlePaymentFailure)
 
 	}
 	{
