@@ -19,3 +19,8 @@ type VerifyPaymentRequest struct {
 	RazorpayPaymentID  string `json:"razorpay_payment_id" binding:"required"`
 	RazorpaySignature  string `json:"razorpay_signature" binding:"required"`
 }
+
+type PaymentFailureRequest struct {
+    RazorpayOrderID   string `json:"razorpay_order_id" binding:"required"`
+    RazorpayPaymentID string `json:"razorpay_payment_id" binding:"required"`
+}
