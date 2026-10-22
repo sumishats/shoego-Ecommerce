@@ -6,6 +6,7 @@ import (
 	"shoego/database"
 	"shoego/domain"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -121,6 +122,11 @@ func UpdateOrderStatus(orderID uint, status string) error {
 
 	updates := map[string]interface{}{
 		"order_status": status,
+	}
+
+	if status == "delivered" && order.DeliveredAt == nil {
+		deliveredTime := time.Now()
+		updates["delivered_at"] = deliveredTime
 	}
 
 	switch order.PaymentMethod {

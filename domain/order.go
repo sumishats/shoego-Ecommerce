@@ -1,6 +1,10 @@
 package domain
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Order struct {
 	gorm.Model
@@ -20,6 +24,7 @@ type Order struct {
 	FinalAmount        float64
 	CancellationReason string      `gorm:"type:text"`
 	ReturnReason       string      `gorm:"type:text"`
+	DeliveredAt        *time.Time  `gorm:"index"`
 	OrderItems         []OrderItem `gorm:"foreignKey:OrderID"`
 }
 
