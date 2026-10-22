@@ -6,7 +6,6 @@ import (
 	"shoego/helper"
 	"shoego/models"
 	"shoego/repository"
-	"strconv"
 	"strings"
 )
 
@@ -28,8 +27,8 @@ func GetAdminOrders(page, limit int, search, status, sortBy, date string) (*mode
 
 	for _, order := range orders {
 		orderResponse = append(orderResponse, models.AdminOrderListResponse{
-			ID:            order.ID,
-			OrderID:       "ORD" + strconv.FormatUint(uint64(order.ID), 10), //uint to string like orderid
+			ID: order.ID,
+			OrderID:       order.OrderID,
 			Date:          order.CreatedAt,
 			UserName:      order.User.Name,
 			UserEmail:     order.User.Email,
@@ -84,14 +83,20 @@ func GetAdminOrderDetail(orderID uint) (*models.AdminOrderDetailResponse, error)
 	}
 
 	return &models.AdminOrderDetailResponse{
-		ID:            order.ID,
-		OrderID:       "ORD" + strconv.FormatUint(uint64(order.ID), 10),
+		ID: order.ID,
+		OrderID:       order.OrderID,
 		Date:          order.CreatedAt,
 		OrderStatus:   order.OrderStatus,
-		FinalAmount:   order.FinalAmount,
 		PaymentMethod: order.PaymentMethod,
 		PaymentStatus: order.PaymentStatus,
 		ItemCount:     len(order.OrderItems),
+
+		Subtotal:    order.Subtotal,
+		TaxAmount:   order.TaxAmount, 
+		Discount:    order.CouponDiscount,
+		ShippingFee: order.ShippingCharge,
+		FinalAmount: order.FinalAmount,
+
 		User: models.AdminOrderUserResponse{
 			ID:    order.User.ID,
 			Name:  order.User.Name,
@@ -336,7 +341,7 @@ func CancelOrder(userID uint, orderID, reason string) error {
 	return repository.UpdateOrder(&order)
 }
 
-func CancelOrderItem(userID uint,orderID string,itemID uint,reason string,) error {
+func CancelOrderItem(userID uint, orderID string, itemID uint, reason string) error {
 
 	order, err := repository.GetOrderByOrderID(userID, orderID)
 	if err != nil {
@@ -364,8 +369,7 @@ func CancelOrderItem(userID uint,orderID string,itemID uint,reason string,) erro
 		return errors.New("returned item cannot be cancelled")
 	}
 
-
-	return repository.CancelOrderItemTransaction(userID,orderID,itemID,reason,)
+	return repository.CancelOrderItemTransaction(userID, orderID, itemID, reason)
 }
 
 func ReturnOrder(userID uint, orderID, reason string) error {

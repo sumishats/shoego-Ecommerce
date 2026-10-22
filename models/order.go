@@ -25,6 +25,9 @@ type AdminOrderDetailResponse struct {
 	PaymentStatus string                    `json:"payment_status"`
 	ItemCount     int                       `json:"item_count"`
 	Subtotal      float64                   `json:"subtotal"`
+
+	TaxAmount     float64                   `json:"tax_amount"`
+	
 	Discount      float64                   `json:"discount"`
 	ShippingFee   float64                   `json:"shipping_fee"`
 	FinalAmount   float64                   `json:"final_amount"`
