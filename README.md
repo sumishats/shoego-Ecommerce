@@ -22,12 +22,16 @@ Shoego is a backend e-commerce application built using Go, Gin, and GORM. It pro
 - Product and category management
 - Search, filter, and pagination
 - Admin management
+- Admin Dashboard – View key business metrics and top-selling products
+- Sales Reports – Generate sales reports to analyze sales performance and revenue
 - Swagger API documentation
 - Cart and Wishlist
 - Checkout and Order managment
-- Razorpay
-- Coupon and wallet
-- Offer management and referral offer
+- Razorpay payment integration
+- Razorpay Webhooks – Handle payment event notifications and synchronize payment status
+-Coupon and Wallet management
+-Offer management and referral offers
+-Inventory management
 
 ## Technologies Used
 - **Go (Golang)**: Backend programming language
@@ -37,6 +41,7 @@ Shoego is a backend e-commerce application built using Go, Gin, and GORM. It pro
 - **JWT**: Authentication and authorization
 - **Swagger**: API documentation
 - **Validator**: Input validation
+- **Razorpay**: Online payment integration
 - **Postman**: API testing
 
   ## Installation
