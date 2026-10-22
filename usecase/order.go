@@ -7,6 +7,7 @@ import (
 	"shoego/models"
 	"shoego/repository"
 	"strings"
+	"time"
 )
 
 func GetAdminOrders(page, limit int, search, status, sortBy, date string) (*models.AdminOrderPaginationResponse, error) {
@@ -27,7 +28,7 @@ func GetAdminOrders(page, limit int, search, status, sortBy, date string) (*mode
 
 	for _, order := range orders {
 		orderResponse = append(orderResponse, models.AdminOrderListResponse{
-			ID: order.ID,
+			ID:            order.ID,
 			OrderID:       order.OrderID,
 			Date:          order.CreatedAt,
 			UserName:      order.User.Name,
@@ -83,7 +84,7 @@ func GetAdminOrderDetail(orderID uint) (*models.AdminOrderDetailResponse, error)
 	}
 
 	return &models.AdminOrderDetailResponse{
-		ID: order.ID,
+		ID:            order.ID,
 		OrderID:       order.OrderID,
 		Date:          order.CreatedAt,
 		OrderStatus:   order.OrderStatus,
@@ -92,7 +93,7 @@ func GetAdminOrderDetail(orderID uint) (*models.AdminOrderDetailResponse, error)
 		ItemCount:     len(order.OrderItems),
 
 		Subtotal:    order.Subtotal,
-		TaxAmount:   order.TaxAmount, 
+		TaxAmount:   order.TaxAmount,
 		Discount:    order.CouponDiscount,
 		ShippingFee: order.ShippingCharge,
 		FinalAmount: order.FinalAmount,
@@ -137,6 +138,11 @@ func ChangeOrderStatus(orderID uint, status string) error {
 		order, err := repository.GetOrderByID(orderID)
 		if err != nil {
 			return err
+		}
+
+		if order.OrderStatus != "return_requested" &&
+			order.OrderStatus != "partially_returned" {
+			return errors.New("order has no pending return request")
 		}
 
 		if order.PaymentStatus != "refunded" {
@@ -386,10 +392,26 @@ func ReturnOrder(userID uint, orderID, reason string) error {
 		return errors.New("only delivered orders can be returned")
 	}
 
+	if order.DeliveredAt == nil {
+		return errors.New("delivery date is not available for this order")
+	}
+
+	// Allow returns for 7 days from delivery.
+	returnDeadline := order.DeliveredAt.Add(7 * 24 * time.Hour)
+
+	if time.Now().After(returnDeadline) {
+		return errors.New("return period has expired; returns are allowed only within 7 days of delivery")
+	}
+
 	for i := range order.OrderItems {
 		item := &order.OrderItems[i]
 
 		if item.ItemStatus == "cancelled" {
+			continue
+		}
+
+		if item.ItemStatus == "returned" ||
+			item.ItemStatus == "return_requested" {
 			continue
 		}
 
@@ -408,9 +430,10 @@ func ReturnOrder(userID uint, orderID, reason string) error {
 }
 
 func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) error {
-	if reason == "" {
+	if strings.TrimSpace(reason) == "" {
 		return errors.New("return reason is required")
 	}
+
 
 	order, err := repository.GetOrderByOrderID(userID, orderID)
 	if err != nil {
@@ -421,6 +444,17 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 		return errors.New("only delivered order items can be returned")
 	}
 
+	if order.DeliveredAt == nil {
+		return errors.New("delivery date is not available for this order")
+	}
+
+	// Check the 7-day return deadline.
+	returnDeadline := order.DeliveredAt.Add(7 * 24 * time.Hour)
+
+	if time.Now().After(returnDeadline) {
+		return errors.New("return period has expired; returns are allowed only within 7 days of delivery")
+	}
+
 	item, err := repository.GetOrderItemByID(order.ID, itemID)
 	if err != nil {
 		return err
@@ -428,6 +462,10 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 
 	if item.ItemStatus == "returned" {
 		return errors.New("item already returned")
+	}
+
+	if item.ItemStatus == "return_requested" {
+		return errors.New("return already requested for this item")
 	}
 
 	if item.ItemStatus == "cancelled" {
