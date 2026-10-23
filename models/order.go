@@ -6,6 +6,7 @@ type AdminOrderListResponse struct {
 	ID            uint      `json:"id"`
 	OrderID       string    `json:"order_id"`
 	Date          time.Time `json:"date"`
+	DateTimestamp int64     `json:"date_timestamp"` // ADDED
 	UserName      string    `json:"user_name"`
 	UserEmail     string    `json:"user_email"`
 	UserPhone     string    `json:"user_phone"`
@@ -17,23 +18,24 @@ type AdminOrderListResponse struct {
 }
 
 type AdminOrderDetailResponse struct {
-	ID            uint                      `json:"id"`
-	OrderID       string                    `json:"order_id"`
-	Date          time.Time                 `json:"date"`
-	OrderStatus   string                    `json:"order_status"`
-	PaymentMethod string                    `json:"payment_method"`
-	PaymentStatus string                    `json:"payment_status"`
-	ItemCount     int                       `json:"item_count"`
-	Subtotal      float64                   `json:"subtotal"`
+	ID            uint      `json:"id"`
+	OrderID       string    `json:"order_id"`
+	Date          time.Time `json:"date"`
+	DateTimestamp int64     `json:"date_timestamp"` // ADDED
+	OrderStatus   string    `json:"order_status"`
+	PaymentMethod string    `json:"payment_method"`
+	PaymentStatus string    `json:"payment_status"`
+	ItemCount     int       `json:"item_count"`
+	Subtotal      float64   `json:"subtotal"`
 
-	TaxAmount     float64                   `json:"tax_amount"`
-	
-	Discount      float64                   `json:"discount"`
-	ShippingFee   float64                   `json:"shipping_fee"`
-	FinalAmount   float64                   `json:"final_amount"`
-	User          AdminOrderUserResponse    `json:"user"`
-	Address       AdminOrderAddressResponse `json:"address"`
-	Items         []AdminOrderItemResponse  `json:"items"`
+	TaxAmount float64 `json:"tax_amount"`
+
+	Discount    float64                   `json:"discount"`
+	ShippingFee float64                   `json:"shipping_fee"`
+	FinalAmount float64                   `json:"final_amount"`
+	User        AdminOrderUserResponse    `json:"user"`
+	Address     AdminOrderAddressResponse `json:"address"`
+	Items       []AdminOrderItemResponse  `json:"items"`
 }
 
 type AdminOrderUserResponse struct {
@@ -123,11 +125,12 @@ type ReturnOrderItemRequest struct {
 }
 
 type OrderListItemResponse struct {
-	OrderID       string    `json:"order_id"`
-	OrderStatus   string    `json:"order_status"`
-	OrderDate     time.Time `json:"order_date"`
-	FinalAmount   float64   `json:"final_amount"`
-	PaymentMethod string    `json:"payment_method"`
+	OrderID        string    `json:"order_id"`
+	OrderStatus    string    `json:"order_status"`
+	OrderDate      time.Time `json:"order_date"`
+	OrderTimestamp int64     `json:"order_timestamp"` // ADDED
+	FinalAmount    float64   `json:"final_amount"`
+	PaymentMethod  string    `json:"payment_method"`
 }
 
 type OrderItemResponse struct {
@@ -147,6 +150,7 @@ type OrderDetailResponse struct {
 	OrderID        string              `json:"order_id"`
 	OrderStatus    string              `json:"order_status"`
 	OrderDate      time.Time           `json:"order_date"`
+	OrderTimestamp int64               `json:"order_timestamp"` // ADDED
 	PaymentMethod  string              `json:"payment_method"`
 	PaymentStatus  string              `json:"payment_status"`
 	Subtotal       float64             `json:"subtotal"`
