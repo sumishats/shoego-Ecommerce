@@ -31,6 +31,7 @@ func GetAdminOrders(page, limit int, search, status, sortBy, date string) (*mode
 			ID:            order.ID,
 			OrderID:       order.OrderID,
 			Date:          order.CreatedAt,
+			DateTimestamp: order.CreatedAt.Unix(), //added
 			UserName:      order.User.Name,
 			UserEmail:     order.User.Email,
 			UserPhone:     order.User.Phone,
@@ -84,9 +85,13 @@ func GetAdminOrderDetail(orderID uint) (*models.AdminOrderDetailResponse, error)
 	}
 
 	return &models.AdminOrderDetailResponse{
-		ID:            order.ID,
-		OrderID:       order.OrderID,
-		Date:          order.CreatedAt,
+		ID:      order.ID,
+		OrderID: order.OrderID,
+		Date:    order.CreatedAt,
+
+		// ADDED: Convert order creation time to epoch seconds.
+		DateTimestamp: order.CreatedAt.Unix(),
+
 		OrderStatus:   order.OrderStatus,
 		PaymentMethod: order.PaymentMethod,
 		PaymentStatus: order.PaymentStatus,
@@ -222,6 +227,14 @@ func ChangeProductStock(productID uint, stock int) error {
 //user order managemnt
 
 func GetUserOrderList(userID uint, search string, page, limit int) ([]models.OrderListItemResponse, error) {
+
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
 	offset := (page - 1) * limit
 	orders, err := repository.GetUserOrders(userID, search, limit, offset)
 	if err != nil {
@@ -230,11 +243,13 @@ func GetUserOrderList(userID uint, search string, page, limit int) ([]models.Ord
 	var response []models.OrderListItemResponse
 	for _, order := range orders {
 		response = append(response, models.OrderListItemResponse{
-			OrderID:       order.OrderID,
-			OrderStatus:   order.OrderStatus,
-			OrderDate:     order.CreatedAt,
-			FinalAmount:   order.FinalAmount,
-			PaymentMethod: order.PaymentMethod,
+			OrderID:     order.OrderID,
+			OrderStatus: order.OrderStatus,
+			OrderDate:   order.CreatedAt,
+			// ADDED: Convert order creation time to epoch seconds.
+			OrderTimestamp: order.CreatedAt.Unix(),
+			FinalAmount:    order.FinalAmount,
+			PaymentMethod:  order.PaymentMethod,
 		})
 	}
 	return response, nil
@@ -274,9 +289,11 @@ func GetUserOrderDetail(userID uint, orderID string) (*models.OrderDetailRespons
 	}
 
 	return &models.OrderDetailResponse{
-		OrderID:        order.OrderID,
-		OrderStatus:    order.OrderStatus,
-		OrderDate:      order.CreatedAt,
+		OrderID:     order.OrderID,
+		OrderStatus: order.OrderStatus,
+		OrderDate:   order.CreatedAt,
+		// ADDED: Convert order creation time to epoch seconds.
+		OrderTimestamp: order.CreatedAt.Unix(),
 		PaymentMethod:  order.PaymentMethod,
 		PaymentStatus:  order.PaymentStatus,
 		Subtotal:       order.Subtotal,
@@ -433,7 +450,6 @@ func ReturnOrderItem(userID uint, orderID string, itemID uint, reason string) er
 	if strings.TrimSpace(reason) == "" {
 		return errors.New("return reason is required")
 	}
-
 
 	order, err := repository.GetOrderByOrderID(userID, orderID)
 	if err != nil {
