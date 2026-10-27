@@ -40,7 +40,6 @@ func CreateRazorpayOrder(userID uint, req models.CreateRazorpayOrderRequest) (*m
 		return nil, err
 	}
 
-	
 	orderID := "ORD-" + uuid.NewString()
 
 	order := &domain.Order{
