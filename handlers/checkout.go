@@ -3,12 +3,16 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"log"
 	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
 	"shoego/models"
 	"shoego/response"
 	"shoego/usecase"
-	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,82 +30,142 @@ var (
 func CreateCheckoutHandoff(c *gin.Context) {
 	value, exists := c.Get("auth_token")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, response.ClientResponse(http.StatusUnauthorized,"authentication token missing",nil,nil,))
+		c.JSON(http.StatusUnauthorized,
+			response.ClientResponse(
+				http.StatusUnauthorized,
+				"authentication token missing",
+				nil, nil,
+			))
 		return
 	}
 
 	accessToken, ok := value.(string)
 	if !ok || accessToken == "" {
-		c.JSON(http.StatusUnauthorized, response.ClientResponse(http.StatusUnauthorized,"invalid authentication token",nil,nil))
+		c.JSON(http.StatusUnauthorized,
+			response.ClientResponse(
+				http.StatusUnauthorized,
+				"invalid authentication token",
+				nil, nil,
+			))
 		return
 	}
 
+	// Get application base URL from environment
+	baseURL := strings.TrimRight(os.Getenv("APP_BASE_URL"), "/")
+
+	if baseURL == "" {
+		c.JSON(http.StatusInternalServerError,
+			response.ClientResponse(
+				http.StatusInternalServerError,
+				"application base URL is not configured",
+				nil, nil,
+			))
+		return
+	}
+
+	// Generate secure random token
 	randomBytes := make([]byte, 32)
+
 	if _, err := rand.Read(randomBytes); err != nil {
-		c.JSON(http.StatusInternalServerError, response.ClientResponse(http.StatusInternalServerError,"could not create checkout link",nil,
-			err.Error(),
-		))
+		log.Println("Checkout token generation failed:", err)
+
+		c.JSON(http.StatusInternalServerError,
+			response.ClientResponse(
+				http.StatusInternalServerError,
+				"could not create checkout link",
+				nil, nil,
+			))
 		return
 	}
 
 	token := hex.EncodeToString(randomBytes)
 
+	now := time.Now()
+
 	handoffMu.Lock()
 
 	for key, item := range handoffTokens {
-		if time.Now().After(item.ExpiresAt) {
+		if now.After(item.ExpiresAt) {
 			delete(handoffTokens, key)
 		}
 	}
 
 	handoffTokens[token] = checkoutHandoff{
 		AccessToken: accessToken,
-		ExpiresAt:   time.Now().Add(60 * time.Second),
+		ExpiresAt:   now.Add(60 * time.Second),
 	}
 
 	handoffMu.Unlock()
 
-	link := "http://localhost:8080/checkout/handoff?token=" + token
+	link := baseURL + "/checkout/handoff?token=" + token
 
-	c.JSON(http.StatusOK, response.ClientResponse(http.StatusOK,"checkout handoff link created",
-		gin.H{
-			"url":                link,
-			"expires_in_seconds": 60,
-		},
-		nil,
-	))
+	c.JSON(http.StatusOK,
+		response.ClientResponse(
+			http.StatusOK,
+			"checkout handoff link created",
+			gin.H{
+				"url":                link,
+				"expires_in_seconds": 60,
+			},
+			nil,
+		))
 }
+
+
 
 func OpenCheckoutHandoff(c *gin.Context) {
 	token := c.Query("token")
+
 	if token == "" {
-		c.JSON(http.StatusBadRequest, response.ClientResponse(http.StatusBadRequest,"handoff token is required",nil,nil,))
+		c.JSON(http.StatusBadRequest,
+			response.ClientResponse(
+				http.StatusBadRequest,
+				"handoff token is required",
+				nil, nil,
+			))
 		return
 	}
 
+	
 	handoffMu.Lock()
+
 	item, exists := handoffTokens[token]
-	delete(handoffTokens, token)
+
+	if exists {
+		delete(handoffTokens, token)
+	}
+
 	handoffMu.Unlock()
 
 	if !exists || time.Now().After(item.ExpiresAt) {
-		c.JSON(http.StatusUnauthorized, response.ClientResponse(http.StatusUnauthorized,"checkout link is invalid or expired; create a new one",nil,nil,))
+		c.JSON(http.StatusUnauthorized,
+			response.ClientResponse(
+				http.StatusUnauthorized,
+				"checkout link is invalid or expired; create a new one",
+				nil, nil,
+			))
 		return
 	}
+
 
 	c.Header("Cache-Control", "no-store")
 	c.Header("Referrer-Policy", "no-referrer")
 
+	
+	secureCookie := os.Getenv("APP_ENV") == "production"
+
 	c.SetSameSite(http.SameSiteLaxMode)
+	
 	c.SetCookie(
-		"Authorization",
+		"jwt_token",
 		item.AccessToken,
 		15*60,
 		"/",
 		"",
-		false, 
-		true,  
+		secureCookie,
+		true,
 	)
+
 
 	c.Redirect(http.StatusSeeOther, "/static/index.html")
 }

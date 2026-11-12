@@ -53,20 +53,21 @@ func main() {
 
 	router := gin.Default()
 
-	router.Static("/images", "./images")
+	// Configure trusted proxy
+	if err := router.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
+		log.Fatal(err)
 
-	router.Static("/static", "./template")
+		router.Static("/images", "./images")
 
-	routes.UserRoutes(router.Group("/"), db)
-	routes.AdminRoutes(router.Group("/admin"), db)
+		router.Static("/static", "./template")
 
-	router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		routes.UserRoutes(router.Group("/"), db)
+		routes.AdminRoutes(router.Group("/admin"), db)
 
-	err = router.Run("localhost:8080")
-	if err != nil {
+		router.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-		log.Fatalf("Local host Errors %v", err)
-
+		if err := router.Run("0.0.0.0:8080"); err != nil {
+			log.Fatalf("Local host Errors %v", err)
+		}
 	}
-
 }

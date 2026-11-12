@@ -14,9 +14,10 @@ func AuthMiddleware() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		tokenString := helper.GetTokenFromHeader(authHeader)
 
-		// if header token missing, check cookie
+		// If header token is missing, check cookie
 		if tokenString == "" {
-			cookieToken, err := c.Cookie("Authorization")
+			cookieToken, err := c.Cookie("jwt_token")
+
 			if err != nil {
 				errRes := response.ClientResponse(
 					http.StatusUnauthorized,
@@ -24,15 +25,18 @@ func AuthMiddleware() gin.HandlerFunc {
 					nil,
 					"token not found in header or cookie",
 				)
+
 				c.JSON(http.StatusUnauthorized, errRes)
 				c.Abort()
 				return
 			}
+
 			tokenString = cookieToken
 		}
 
-		// check token is blacklisted or not
+		// Check whether token is blacklisted
 		blacklisted, err := repository.IsTokenBlacklist(tokenString)
+
 		if err != nil {
 			errRes := response.ClientResponse(
 				http.StatusInternalServerError,
@@ -40,6 +44,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				nil,
 				err.Error(),
 			)
+
 			c.JSON(http.StatusInternalServerError, errRes)
 			c.Abort()
 			return
@@ -52,14 +57,22 @@ func AuthMiddleware() gin.HandlerFunc {
 				nil,
 				"blacklisted token",
 			)
+
 			c.JSON(http.StatusUnauthorized, errRes)
 			c.Abort()
 			return
 		}
 
 		userID, userEmail, err := helper.ExtractUserIDFromToken(tokenString)
+
 		if err != nil {
-			errRes := response.ClientResponse(http.StatusUnauthorized, "invalid token", nil, err.Error())
+			errRes := response.ClientResponse(
+				http.StatusUnauthorized,
+				"invalid token",
+				nil,
+				err.Error(),
+			)
+
 			c.JSON(http.StatusUnauthorized, errRes)
 			c.Abort()
 			return
@@ -67,7 +80,6 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		c.Set("user_id", userID)
 		c.Set("user_email", userEmail)
-
 		c.Set("auth_token", tokenString)
 
 		c.Next()
