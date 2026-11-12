@@ -423,7 +423,8 @@ loadCheckout();
 </div>
 
 <script>
-const API_URL = "http://localhost:8080";
+//const API_URL = "http://localhost:8080";
+const API_URL = window.location.origin;
 
 let selectedAddress = null;
 let paymentInProgress = false;
