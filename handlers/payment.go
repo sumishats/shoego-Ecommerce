@@ -136,6 +136,8 @@ func RazorpayWebhook(c *gin.Context) {
 		return
 	}
 
+	log.Println("Razorpay webhook signature verified successfully")
+
 	// Signature is valid. Process the event in the usecase layer.
 	if err := usecase.HandleRazorpayWebhook(rawBody); err != nil {
 		log.Printf("Razorpay webhook processing failed: %v", err)
